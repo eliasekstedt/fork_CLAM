@@ -2,18 +2,9 @@
 import os
 import pandas as pd
 
-"""
-dataroot = "../CLAM/"
-path = {
-    'dpath_slides':f"{dataroot}DATA_DIRECTORY/",
-    'dpath_h5':f"{dataroot}RESULTS_DIRECTORY/patches/",
-    'fpath_doc':f"{dataroot}dataset_csv/patient_documentation.csv",
-    'fpath_out':f"{dataroot}dataset_csv/extract_features.csv"
-}
-"""
-
 class PatchsetMapGenerator:
     def __init__(self, dpath_mrxs, dpath_patchset, fpath_map_patient, fpath_map_patchset):
+        #print(os.listdir(dpath_patchset))
         patchset_ids = [
             id.rstrip('.h5')
             for id in os.listdir(dpath_patchset)
@@ -24,8 +15,10 @@ class PatchsetMapGenerator:
             if id.endswith('.mrxs')
             and id.rstrip('.mrxs') in patchset_ids
         ]
+
         patient_info = pd.read_csv(fpath_map_patient)
         patchset_map = self.create_patchset_map(patient_info, slide_ids)
+        patchset_map['slide_id'] = patchset_map['patchset_id'].str.rstrip('.mrxs')
         print(patchset_map)
         print(patchset_map.shape)
         patchset_map.to_csv(fpath_map_patchset, index=False)
@@ -39,6 +32,7 @@ class PatchsetMapGenerator:
                 id for id in slide_ids
                 if patient_id in id
             ]
+
             for id in this_patients_slide_ids:
                 patchset_map.append({
                     'patchset_id':id,

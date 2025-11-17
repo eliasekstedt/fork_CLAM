@@ -9,21 +9,13 @@ import time
 import pandas as pd
 from tqdm import tqdm
 
-
 class PatchsetGenerator:
-	"""
-	source: dpath_mrxs
-	save_dir:patchsetDir
-	patch_save_dir: ...
-	mask_save_dir: ...
-	stitch_save_dir: ...
-	"""
-	def __init__(self, dpath_mrxs, dpath_patchset):
+	def __init__(self, dpath_mrxs, dpath_patchRoot, dpath_patchset, dpath_patchset_masks, dpath_patchset_stitch):
 		self.dpath_mrxs = dpath_mrxs
+		self.dpath_patchRoot = dpath_patchRoot
 		self.dpath_patchset = dpath_patchset
-		self.patch_save_dir = os.path.join(dpath_patchset, 'patches')
-		self.mask_save_dir = os.path.join(dpath_patchset, 'masks')
-		self.stitch_save_dir = os.path.join(dpath_patchset, 'stitches')
+		self.dpath_patchset_masks = dpath_patchset_masks
+		self.dpath_patchset_stitch = dpath_patchset_stitch
 		self.patch_size = 256
 		self.step_size = 256
 		self.seg_params = {
@@ -35,16 +27,16 @@ class PatchsetGenerator:
 			'keep_ids': 'none',
 			'exclude_ids': 'none'
 		}
-		self.filter_params = {'a_t':100, 'a_h': 16, 'max_n_holes':8}
-		self.vis_params = {'vis_level': -1, 'line_thickness': 500}
-		self.patch_params = {'use_padding': True, 'contour_fn': 'four_pt'}
-		self.patch_level = 0,
-		self.use_default_params = False,
-		self.seg = False,
-		self.save_mask = True,
-		self.stitch= False,
-		self.patch = False,
-		self.auto_skip=True,
+		self.filter_params = {'a_t':100, 'a_h':16, 'max_n_holes':8}
+		self.vis_params = {'vis_level':-1, 'line_thickness':250}
+		self.patch_params = {'use_padding':True, 'contour_fn':'four_pt'}
+		self.patch_level = 0
+		self.use_default_params = False
+		self.seg = True
+		self.save_mask = True
+		self.stitch= True
+		self.patch = True
+		self.auto_skip=True
 		self.process_list = None
 	
 	def __call__(self):
@@ -54,9 +46,9 @@ class PatchsetGenerator:
 			if os.path.isfile(os.path.join(self.dpath_mrxs, slide))
 		]
 		if self.process_list is None:
-			#[print(type(item)) for item in [slides, self.seg_params, self.filter_params, self.vis_params, self.patch_params]]
-			#raise SystemExit
-			df = initialize_df(slides, self.seg_params, self.filter_params, self.vis_params, self.patch_params)
+			df = initialize_df(
+				slides,
+				self.seg_params, self.filter_params, self.vis_params, self.patch_params)
 		
 		else:
 			df = pd.read_csv(self.process_list)
@@ -81,7 +73,7 @@ class PatchsetGenerator:
 		stitch_times = 0.
 
 		for i in tqdm(range(total)):
-			df.to_csv(os.path.join(self.dpath_patchset, 'process_list_autogen.csv'), index=False)
+			df.to_csv(os.path.join(self.dpath_patchRoot, 'process_list_autogen.csv'), index=False)
 			idx = process_stack.index[i]
 			slide = process_stack.loc[idx, 'slide_id']
 			print("\n\nprogress: {:.2f}, {}/{}".format(i/total, i, total))
@@ -90,7 +82,7 @@ class PatchsetGenerator:
 			df.loc[idx, 'process'] = 0
 			slide_id, _ = os.path.splitext(slide)
 
-			if self.auto_skip and os.path.isfile(os.path.join(self.patch_save_dir, slide_id + '.h5')):
+			if self.auto_skip and os.path.isfile(os.path.join(self.dpath_patchset, slide_id + '.h5')):
 				print('{} already exist in destination location, skipped'.format(slide_id))
 				df.loc[idx, 'status'] = 'already_exist'
 				continue
@@ -175,14 +167,13 @@ class PatchsetGenerator:
 			df.loc[idx, 'vis_level'] = current_vis_params['vis_level']
 			df.loc[idx, 'seg_level'] = current_seg_params['seg_level']
 
-
 			seg_time_elapsed = -1
 			if self.seg:
 				WSI_object, seg_time_elapsed = self.segment(WSI_object, current_seg_params, current_filter_params) 
 
 			if self.save_mask:
 				mask = WSI_object.visWSI(**current_vis_params)
-				mask_path = os.path.join(self.mask_save_dir, slide_id+'.jpg')
+				mask_path = os.path.join(self.dpath_patchset_masks, slide_id+'.jpg')
 				mask.save(mask_path)
 
 			patch_time_elapsed = -1 # Default time
@@ -191,16 +182,16 @@ class PatchsetGenerator:
 					'patch_level': self.patch_level,
 					'patch_size': self.patch_size,
 					'step_size': self.step_size, 
-					'save_path': self.patch_save_dir
+					'save_path': self.dpath_patchset
 				})
 				file_path, patch_time_elapsed = self.patching(WSI_object = WSI_object,  **current_patch_params,)
 			
 			stitch_time_elapsed = -1
 			if self.stitch:
-				file_path = os.path.join(self.patch_save_dir, slide_id+'.h5')
+				file_path = os.path.join(self.dpath_patchset, slide_id+'.h5')
 				if os.path.isfile(file_path):
 					heatmap, stitch_time_elapsed = self.stitching(file_path, WSI_object, downscale=64)
-					stitch_path = os.path.join(self.stitch_save_dir, slide_id+'.jpg')
+					stitch_path = os.path.join(self.dpath_patchset_stitch, slide_id+'.jpg')
 					heatmap.save(stitch_path)
 
 			print("segmentation took {} seconds".format(seg_time_elapsed))
@@ -216,13 +207,12 @@ class PatchsetGenerator:
 		patch_times /= total
 		stitch_times /= total
 
-		df.to_csv(os.path.join(self.dpath_patchset, 'process_list_autogen.csv'), index=False)
+		df.to_csv(os.path.join(self.dpath_patchRoot, 'process_list_autogen.csv'), index=False)
 		print("average segmentation time in s per slide: {}".format(seg_times))
 		print("average patching time in s per slide: {}".format(patch_times))
 		print("average stiching time in s per slide: {}".format(stitch_times))
 			
 		return seg_times, patch_times
-
 
 	def stitching(self, file_path, wsi_object, downscale = 64):
 		start = time.time()

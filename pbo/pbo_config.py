@@ -6,24 +6,37 @@ def create_dirs(*dirpaths):
         if not os.path.isdir(dirpath):
             os.makedirs(dirpath)
 
-csvDir = 'csv/'
-mrxsDir = '../CLAM/data0_mrxs/' #.mrxs
-dpath_patchset = 'data/data1_expatch/' #.h5
-dpath_vectors = 'data/data2_vectors/' #.h5 + .pt
-
-create_dirs(
-    dpath_patchset,
-    dpath_vectors,
-)
+dpath_csvRoot = 'csv/'
+dpath_dataRoot = 'data/'
 
 from types import SimpleNamespace
 cfg = SimpleNamespace()
-cfg.dpath_mrxs = mrxsDir
-cfg.dpath_patchset = dpath_patchset
-cfg.fpath_map_patient_info = os.path.join(csvDir, 'patient_info.csv')
-cfg.fpath_map_patchset = os.path.join(csvDir, 'map_patchset.csv')
-cfg.dpath_vectorsDir = os.path.join(dpath_vectors, 'pt_files/')
 
+cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/' #.mrxs WSI
+cfg.fpath_map_patient_info = os.path.join(dpath_csvRoot, 'patient_info.csv')
+cfg.fpath_map_patchset = os.path.join(dpath_csvRoot, 'map_patchset.csv')
 
+cfg.dpath_patchRoot = os.path.join(dpath_dataRoot, 'data1_expatch/') #.h5
+cfg.dpath_patchset = os.path.join(cfg.dpath_patchRoot, 'patches')
+cfg.dpath_patchset_masks = os.path.join(cfg.dpath_patchRoot, 'masks')
+cfg.dpath_patchset_stitch = os.path.join(cfg.dpath_patchRoot, 'stitches')
 
+cfg.dpath_featuresRoot = os.path.join(dpath_dataRoot, 'data2_features/') #.h5 + .pt
+cfg.dpath_features_pt = os.path.join(cfg.dpath_featuresRoot, 'pt_files/')
+cfg.dpath_features_h5 = os.path.join(cfg.dpath_featuresRoot, 'h5_files/')
 
+create_dirs(
+    cfg.dpath_patchRoot,
+    cfg.dpath_patchset,
+    cfg.dpath_patchset_masks,
+    cfg.dpath_patchset_stitch,
+    cfg.dpath_featuresRoot,
+    cfg.dpath_features_pt,
+    cfg.dpath_features_h5,
+)
+
+cfg.fexparam_batch_size=512
+cfg.fexparam_patch_size=224
+cfg.fexparam_slide_extension='.mrxs'
+cfg.fexparam_model_name='resnet50_trunc'
+cfg.fexparam_no_auto_skip=False

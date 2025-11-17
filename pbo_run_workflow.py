@@ -1,35 +1,58 @@
 
 from pbo.pbo_config import *
 
-do_generate_patches = True # .mrxs -> .h5 + create patchset map
+do_generate_patches = False # .mrxs -> .h5 + create patchset map
+do_feature_extraction = True
 
 if do_generate_patches:
-    from pbo.create_patchsets import PatchsetGenerator
-    patchset_generator = PatchsetGenerator(
-        dpath_mrxs=cfg.dpath_mrxs,
-        dpath_patchset=cfg.dpath_patchset,
-    )
-    patchset_generator()
+    """
+    basic fully automated run - aka, extract patches from slides
+    python create_patches_fp.py
+    --source DATA_DIRECTORY #data0_MRXS
+    --save_dir RESULTS_DIRECTORY #data1_expatch
+    --patch_size 256 --seg --patch --stitch 
+    """
+    if False:
+        from pbo_create_patchsets import PatchsetGenerator
+        patchset_generator = PatchsetGenerator(
+            dpath_mrxs=cfg.dpath_mrxsRoot,
+            dpath_patchRoot=cfg.dpath_patchRoot,
+            dpath_patchset=cfg.dpath_patchset,
+            dpath_patchset_masks=cfg.dpath_patchset_masks,
+            dpath_patchset_stitch=cfg.dpath_patchset_stitch,
+        )
+        patchset_generator()
 
+    """
+    generate map1_mrxsSlides.csv
+    """
     from pbo.map_generators import PatchsetMapGenerator
     PatchsetMapGenerator(
-        dpath_mrxs=cfg.dpath_mrxs,
+        dpath_mrxs=cfg.dpath_mrxsRoot,
         dpath_patchset=cfg.dpath_patchset,
         fpath_map_patient=cfg.fpath_map_patient_info,
         fpath_map_patchset=cfg.fpath_map_patchset,
     )
 
-"""
-basic fully automated run - aka, extract patches from slides
-python create_patches_fp.py
---source DATA_DIRECTORY #data0_MRXS
---save_dir RESULTS_DIRECTORY #data1_expatch
---patch_size 256 --seg --patch --stitch 
-"""
+if do_feature_extraction:
+    from pbo_extract_features import FeatureExtractor
+    feature_extractor = FeatureExtractor(
+        dpath_patchset=cfg.dpath_patchset,
+        dpath_mrxsRoot=cfg.dpath_mrxsRoot,
+        #dpath_featuresRoot=cfg.dpath_featuresRoot,
+        dpath_features_pt=cfg.dpath_features_pt,
+        dpath_features_h5=cfg.dpath_features_h5,
+        fpath_map_patchset=cfg.fpath_map_patchset,
+        batch_size=cfg.fexparam_batch_size,
+        patch_size=cfg.fexparam_patch_size,
+        slide_extension=cfg.fexparam_slide_extension,
+        model_name=cfg.fexparam_model_name,
+        no_auto_skip=cfg.fexparam_no_auto_skip,
 
-"""
-generate map1_mrxsSlides.csv
-"""
+    )
+    feature_extractor()
+    
+
 """
 optionally set pretrained encoder - for prosBiOps thats the res18
 """
