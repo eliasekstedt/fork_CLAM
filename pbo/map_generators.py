@@ -4,7 +4,6 @@ import pandas as pd
 
 class PatchsetMapGenerator:
     def __init__(self, dpath_mrxs, dpath_patchset, fpath_map_patient, fpath_map_patchset):
-        #print(os.listdir(dpath_patchset))
         patchset_ids = [
             id.rstrip('.h5')
             for id in os.listdir(dpath_patchset)

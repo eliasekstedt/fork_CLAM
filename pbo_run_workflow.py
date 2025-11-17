@@ -39,16 +39,14 @@ if do_feature_extraction:
     feature_extractor = FeatureExtractor(
         dpath_patchset=cfg.dpath_patchset,
         dpath_mrxsRoot=cfg.dpath_mrxsRoot,
-        #dpath_featuresRoot=cfg.dpath_featuresRoot,
         dpath_features_pt=cfg.dpath_features_pt,
         dpath_features_h5=cfg.dpath_features_h5,
         fpath_map_patchset=cfg.fpath_map_patchset,
+        fpath_model=cfg.fpath_fexmodel,
         batch_size=cfg.fexparam_batch_size,
         patch_size=cfg.fexparam_patch_size,
         slide_extension=cfg.fexparam_slide_extension,
-        model_name=cfg.fexparam_model_name,
         no_auto_skip=cfg.fexparam_no_auto_skip,
-
     )
     feature_extractor()
     

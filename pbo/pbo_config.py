@@ -35,8 +35,8 @@ create_dirs(
     cfg.dpath_features_h5,
 )
 
-cfg.fexparam_batch_size=512
+cfg.fpath_fexmodel = 'pbo_model/pbo_res18.ckpt'
+cfg.fexparam_batch_size=256
 cfg.fexparam_patch_size=224
 cfg.fexparam_slide_extension='.mrxs'
-cfg.fexparam_model_name='resnet50_trunc'
 cfg.fexparam_no_auto_skip=False

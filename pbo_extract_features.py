@@ -1,6 +1,7 @@
 import time
 import os
 import torch
+import torchvision
 from torch.utils.data import DataLoader
 import h5py
 import openslide
@@ -9,25 +10,24 @@ import numpy as np
 
 from utils.file_utils import save_hdf5
 from dataset_modules.dataset_h5 import Dataset_All_Bags, Whole_Slide_Bag_FP
-from models import get_encoder
-
-
+#from models import get_encoder
+from utils.constants import MODEL2CONSTANTS
+from utils.transform_utils import get_eval_transforms
 
 class FeatureExtractor:
     def __init__(
-        self, dpath_patchset, dpath_mrxsRoot, dpath_features_pt, dpath_features_h5,
-        fpath_map_patchset, batch_size, patch_size, slide_extension, model_name, no_auto_skip
+        self, dpath_patchset, dpath_mrxsRoot, dpath_features_pt, dpath_features_h5, fpath_map_patchset,
+        fpath_model, batch_size, patch_size, slide_extension, no_auto_skip
     ):
         self.dpath_patchset = dpath_patchset
         self.dpath_mrxsRoot = dpath_mrxsRoot
-        #self.dpath_featuresRoot = dpath_featuresRoot
         self.dpath_features_pt = dpath_features_pt
         self.dpath_features_h5 = dpath_features_h5
         self.fpath_map_patchset = fpath_map_patchset
+        self.fpath_model = fpath_model
         self.batch_size = batch_size
         self.patch_size = patch_size
         self.slide_extension = slide_extension
-        self.model_name=model_name
         self.no_auto_skip=no_auto_skip
     
     def __call__(self):
@@ -38,10 +38,17 @@ class FeatureExtractor:
             raise NotImplementedError
 
         bags_dataset = Dataset_All_Bags(self.fpath_map_patchset)
-        
+
         dest_files = os.listdir(self.dpath_features_pt)
 
-        model, img_transforms = get_encoder(self.model_name, target_img_size=self.patch_size)
+        model = self.get_pbo_encoder(self.fpath_model)
+
+        constants = MODEL2CONSTANTS['resnet50_trunc']
+        img_transforms = get_eval_transforms(
+            mean=constants['mean'],
+            std=constants['std'],
+            target_img_size=self.patch_size,
+        )
                 
         _ = model.eval()
         model = model.to(device)
@@ -51,7 +58,7 @@ class FeatureExtractor:
 
         for bag_candidate_idx in tqdm(range(total)):
             slide_id = bags_dataset[bag_candidate_idx].split(self.slide_extension)[0]
-            bag_name = slide_id+'.h5'
+            bag_name = slide_id + '.h5'
             h5_file_path = os.path.join(self.dpath_patchset, bag_name)
             slide_file_path = os.path.join(self.dpath_mrxsRoot, slide_id+self.slide_extension)
             print('\nprogress: {}/{}'.format(bag_candidate_idx, total))
@@ -71,9 +78,7 @@ class FeatureExtractor:
             )
 
             loader = DataLoader(dataset=dataset, batch_size=self.batch_size, **loader_kwargs)
-            output_file_path = self.compute_w_loader(device, output_path, loader = loader, model = model, verbose = 1)
-            print(output_file_path)
-            raise SystemExit
+            output_file_path = self.compute_w_loader(device, output_path, loader, model)
 
             time_elapsed = time.time() - time_start
             print('\ncomputing features for {} took {} s'.format(output_file_path, time_elapsed))
@@ -86,17 +91,40 @@ class FeatureExtractor:
             features = torch.from_numpy(features)
             bag_base, _ = os.path.splitext(bag_name)
             torch.save(features, os.path.join(self.dpath_features_pt, bag_base+'.pt'))
+    
+    def get_pbo_encoder(self, fpath_model):
+        """
+        this function is code modified from:
+        https://github.com/ozanciga/self-supervised-histopathology?tab=readme-ov-file
+        the .ckpt file can also be downloaded from there.
+        """
+        def load_model_weights(model, weights):
+            model_dict = model.state_dict()
+            weights = {k: v for k, v in weights.items() if k in model_dict}
+            if weights == {}:
+                print('No weight could be loaded..')
+            model_dict.update(weights)
+            model.load_state_dict(model_dict)
+            return model
 
+        model = torchvision.models.__dict__['resnet18'](weights=None)
+        state = torch.load(fpath_model, map_location='cuda:0', weights_only=False)
+        state_dict = state['state_dict']
+        for key in list(state_dict.keys()):
+            state_dict[key.replace('model.', '').replace('resnet.', '')] = state_dict.pop(key)
+        model = load_model_weights(model, state_dict)
+        model.fc = torch.nn.Sequential()
+        #model = model.cuda()
+        return model
 
-
-    def compute_w_loader(self, device, output_path, loader, model, verbose = 0):
+    def compute_w_loader(self, device, output_path, loader, model):
         """
         args:
             output_path: directory to save computed features (.h5 file)
             model: pytorch model
             verbose: level of feedback
         """
-        if verbose > 0:
+        if True:
             print(f'processing a total of {len(loader)} batches'.format(len(loader)))
 
         mode = 'w'
