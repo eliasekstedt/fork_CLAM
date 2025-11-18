@@ -2,6 +2,8 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 OPENAI_MEAN = [0.48145466, 0.4578275, 0.40821073]
 OPENAI_STD = [0.26862954, 0.26130258, 0.27577711]
+PBO_MEAN = [0.9171, 0.8495, 0.8548]
+PBO_STD = [0.0646, 0.0805, 0.0630]
 
 MODEL2CONSTANTS = {
 	"resnet50_trunc": {
@@ -22,5 +24,10 @@ MODEL2CONSTANTS = {
     {
 		"mean": IMAGENET_MEAN,
 		"std": IMAGENET_STD
+	},
+    "pbo":
+    {
+        "mean": PBO_MEAN,
+        "std": PBO_STD
 	}
 }

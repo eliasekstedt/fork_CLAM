@@ -14,15 +14,18 @@ def cshow(img):
     plt.imshow(img)
     plt.show()
 
-def conclude_measurements(measurements):
-    assem = None
+def assemble_log(measurements):
+    log = None
     for measurement in measurements:
         measurement = measurement.unsqueeze(0)
-        if assem is None:
-            assem = measurement
+        if log is None:
+            log = measurement
         else:
-            assem = torch.cat([assem, measurement], axis=0)
-    return torch.mean(assem, axis=0)
+            log = torch.cat([log, measurement], axis=0)
+    return log
+
+def get_result(log):
+    return torch.mean(log, axis=0)
 
 class WSI4NormReader(Dataset):
 	def __init__(self, file_path, wsi):
@@ -45,30 +48,57 @@ class WSI4NormReader(Dataset):
 		img = Compose([ToTensor()])(img)
 		return {'img': img, 'coord': coord}
 
+import numpy as np
+n = 1
+lim = np.inf
 
+assert lim > 0 and n >= 0
 dpath_patchset = cfg.dpath_patchset
 dpath_mrxsRoot = cfg.dpath_mrxsRoot
 
 fname_patchset = os.listdir(dpath_patchset)
-for fname in tqdm(fname_patchset):
-    fname_slide = f"{fname.rstrip('.h5')}.mrxs"
-    fpath_patchset = os.path.join(dpath_patchset, fname)
-    fpath_slide = os.path.join(dpath_mrxsRoot, fname_slide)
 
-    wsi = openslide.open_slide(fpath_slide)
-    reader = WSI4NormReader(fpath_patchset, wsi)
-    loader = DataLoader(reader, batch_size=32, shuffle=True)
+log_patchset_means, log_patchset_stds = [], []
+for _ in tqdm(range(n), total=n):
+#for _ in tqdm(range(n), total=n):
+    for fname in tqdm(fname_patchset, total=len(fname_patchset)):
+    #for fname in fname_patchset:
+        fname_slide = f"{fname.rstrip('.h5')}.mrxs"
+        fpath_patchset = os.path.join(dpath_patchset, fname)
+        fpath_slide = os.path.join(dpath_mrxsRoot, fname_slide)
 
-    patch_means, patch_stds = [], []
-    for i, item in enumerate(loader):
-        if i > 0:
-            break
-        img = item['img'][0, :, :, :]
-        patch_means.append(torch.mean(img, axis=(1, 2)))
-        patch_stds.append(torch.std(img, axis=(1, 2)))
-        #cshow(img.permute(1, 2, 0))
+        wsi = openslide.open_slide(fpath_slide)
+        reader = WSI4NormReader(fpath_patchset, wsi)
+        loader = DataLoader(reader, batch_size=32, shuffle=True)
+        print('\n', len(loader))
+        raise SystemExit
 
+        patch_means, patch_stds = [], []
+        for item in tqdm(enumerate(loader), total=len(loader)):
+            img = item['img'][0, :, :, :]
+            patch_means.append(torch.mean(img, axis=(1, 2)))
+            patch_stds.append(torch.std(img, axis=(1, 2)))
+            #cshow(img.permute(1, 2, 0))
 	
-mean = conclude_measurements(patch_means)
-std = conclude_measurements(patch_stds)
-print(f"mean: {mean}\nstd: {std}")
+    patch_means_log = assemble_log(patch_means)
+    patch_stds_log = assemble_log(patch_stds)
+    patchset_mean = get_result(patch_means_log)
+    patchset_std = get_result(patch_stds_log)
+    log_patchset_means.append(patchset_mean)
+    log_patchset_stds.append(patchset_std)
+    print(f"mean: {patchset_mean}\nstd: {patchset_std}")
+
+import pandas as pd
+log_patchset_means = pd.DataFrame(assemble_log(log_patchset_means).detach().cpu().numpy())
+log_patchset_means.columns = ['mu_g', 'mu_r', 'mu_b']
+log_patchset_stds = pd.DataFrame(assemble_log(log_patchset_stds).detach().cpu().numpy())
+log_patchset_stds.columns = ['std_g', 'std_r', 'std_b']
+full_log = pd.concat([log_patchset_means, log_patchset_stds], axis=1)
+full_log['lim'] = lim
+
+if os.path.isfile('trfs_log.csv'):
+    full_log = pd.concat([pd.read_csv('trfs_log.csv'), full_log], axis=0)
+
+
+print(full_log)
+full_log.to_csv('trfs_log.csv', index=False)

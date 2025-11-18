@@ -11,6 +11,10 @@ if do_generate_patches:
     --source DATA_DIRECTORY #data0_MRXS
     --save_dir RESULTS_DIRECTORY #data1_expatch
     --patch_size 256 --seg --patch --stitch 
+
+
+    note: figure out where to convert slides to HSV color space
+
     """
     if False:
         from pbo_create_patchsets import PatchsetGenerator

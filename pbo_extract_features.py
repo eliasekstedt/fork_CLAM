@@ -43,7 +43,7 @@ class FeatureExtractor:
 
         model = self.get_pbo_encoder(self.fpath_model)
 
-        constants = MODEL2CONSTANTS['resnet50_trunc']
+        constants = MODEL2CONSTANTS['pbo']
         img_transforms = get_eval_transforms(
             mean=constants['mean'],
             std=constants['std'],
@@ -74,7 +74,7 @@ class FeatureExtractor:
             dataset = Whole_Slide_Bag_FP(
                 file_path=h5_file_path, 
                 wsi=wsi, 
-                img_transforms=img_transforms
+                img_transforms=img_transforms,
             )
 
             loader = DataLoader(dataset=dataset, batch_size=self.batch_size, **loader_kwargs)
