@@ -25,6 +25,9 @@ cfg.dpath_featuresRoot = os.path.join(dpath_dataRoot, 'data2_features/') #.h5 + 
 cfg.dpath_features_pt = os.path.join(cfg.dpath_featuresRoot, 'pt_files/')
 cfg.dpath_features_h5 = os.path.join(cfg.dpath_featuresRoot, 'h5_files/')
 
+cfg.dpath_classtrainRoot = os.path.join(dpath_dataRoot, 'data3_classtrain/')
+# data_root_dir
+
 create_dirs(
     cfg.dpath_patchRoot,
     cfg.dpath_patchset,
@@ -36,7 +39,7 @@ create_dirs(
 )
 
 cfg.fpath_fexmodel = 'pbo_model/pbo_res18.ckpt'
-cfg.fexparam_batch_size=256
+cfg.fexparam_batch_size=512
 cfg.fexparam_patch_size=224
 cfg.fexparam_slide_extension='.mrxs'
 cfg.fexparam_no_auto_skip=False

@@ -2,7 +2,8 @@
 from pbo.pbo_config import *
 
 do_generate_patches = False # .mrxs -> .h5 + create patchset map
-do_feature_extraction = True
+do_feature_extraction = False
+do_classification_training = True
 
 if do_generate_patches:
     """
@@ -53,7 +54,9 @@ if do_feature_extraction:
         no_auto_skip=cfg.fexparam_no_auto_skip,
     )
     feature_extractor()
-    
+
+if do_classification_training:
+    pass
 
 """
 optionally set pretrained encoder - for prosBiOps thats the res18
@@ -78,7 +81,9 @@ python create_splits_seq.py
 """
 GPU Training Example for Binary Positive vs. Negative Classification
 CUDA_VISIBLE_DEVICES=0 python main.py
---drop_out 0.25 --early_stopping --lr 2e-4 --k 10 --exp_code task_1_tumor_vs_normal_CLAM_50 --weighted_sample --bag_loss ce --inst_loss svm --task task_1_tumor_vs_normal --model_type clam_sb --log_data
+--drop_out 0.25 --early_stopping --lr 2e-4 --k 10 
+--exp_code task_1_tumor_vs_normal_CLAM_50 # outdir, aka classtrain
+--weighted_sample --bag_loss ce --inst_loss svm --task task_1_tumor_vs_normal --model_type clam_sb --log_data
 --data_root_dir DATA_ROOT_DIR # cfg.dpath_vectors
 --embed_dim 1024
 """

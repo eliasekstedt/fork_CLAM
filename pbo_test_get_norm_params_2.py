@@ -36,14 +36,14 @@ dpath_mrxsRoot = cfg.dpath_mrxsRoot
 
 fname_patchset = os.listdir(dpath_patchset)
 patchset_stats = None
-for fname in tqdm(fname_patchset[:3], total=len(fname_patchset)):
+for fname in tqdm(fname_patchset, total=len(fname_patchset)):
     fname_slide = f"{fname.rstrip('.h5')}.mrxs"
     fpath_patchset = os.path.join(dpath_patchset, fname)
     fpath_slide = os.path.join(dpath_mrxsRoot, fname_slide)
 
     wsi = openslide.open_slide(fpath_slide)
     reader = WSI4NormReader(fpath_patchset, wsi)
-    loader = DataLoader(reader, batch_size=512, shuffle=True)
+    loader = DataLoader(reader, batch_size=512, shuffle=False)
 
     batch_statitem = None
     for item in loader:
