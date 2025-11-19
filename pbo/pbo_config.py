@@ -15,6 +15,7 @@ cfg = SimpleNamespace()
 cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/' #.mrxs WSI
 cfg.fpath_map_patient_info = os.path.join(dpath_csvRoot, 'patient_info.csv')
 cfg.fpath_map_patchset = os.path.join(dpath_csvRoot, 'map_patchset.csv')
+cfg.fpath_map_classtrain = os.path.join(dpath_csvRoot, 'map_classtrain.csv')
 
 cfg.dpath_patchRoot = os.path.join(dpath_dataRoot, 'data1_expatch/') #.h5
 cfg.dpath_patchset = os.path.join(cfg.dpath_patchRoot, 'patches')
@@ -26,7 +27,15 @@ cfg.dpath_features_pt = os.path.join(cfg.dpath_featuresRoot, 'pt_files/')
 cfg.dpath_features_h5 = os.path.join(cfg.dpath_featuresRoot, 'h5_files/')
 
 cfg.dpath_classtrainRoot = os.path.join(dpath_dataRoot, 'data3_classtrain/')
-# data_root_dir
+# ('--results_dir', default='./results', help='results directory (default: ./results)')
+cfg.dpath_classtrain_results = os.path.join(cfg.dpath_classtrainRoot, 'results/')
+# ('--split_dir', type=str, default=None, help='manually specify the set of splits to use, ' +'instead of infering from the task and label_frac argument (default: None)')
+cfg.dpath_classtrain_splits = os.path.join(cfg.dpath_classtrainRoot, 'splits')
+# ('--exp_code', type=str, help='experiment code for saving results')
+cfg.dpath_classtrain_unknown = os.path.join(cfg.dpath_classtrainRoot, 'unknown')
+
+
+
 
 create_dirs(
     cfg.dpath_patchRoot,
@@ -36,6 +45,10 @@ create_dirs(
     cfg.dpath_featuresRoot,
     cfg.dpath_features_pt,
     cfg.dpath_features_h5,
+    cfg.dpath_classtrainRoot,
+    cfg.dpath_classtrain_results,
+    cfg.dpath_classtrain_splits,
+    cfg.dpath_classtrain_unknown,
 )
 
 cfg.fpath_fexmodel = 'pbo_model/pbo_res18.ckpt'

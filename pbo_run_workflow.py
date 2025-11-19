@@ -56,7 +56,17 @@ if do_feature_extraction:
     feature_extractor()
 
 if do_classification_training:
-    pass
+    from pbo_classification_training import PBOGenericMILDataset
+    PBOGenericMILDataset(
+        csv_path='dataset_csv/tumor_vs_normal_dummy_clean.csv',
+        dpath_features_pt=cfg.dpath_features_pt,
+        shuffle=False, 
+        seed=1, 
+        print_info=True,
+        label_dict={'normal_tissue':0, 'tumor_tissue':1},
+        patient_strat=False,
+        ignore=[]
+    )
 
 """
 optionally set pretrained encoder - for prosBiOps thats the res18
