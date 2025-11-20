@@ -3,7 +3,7 @@ from pbo.pbo_config import *
 
 do_generate_patches = False # .mrxs -> .h5 + create patchset map
 do_feature_extraction = False
-do_classification_training = True
+do_classification_training = False
 
 if do_generate_patches:
     """
@@ -55,18 +55,30 @@ if do_feature_extraction:
     )
     feature_extractor()
 
+
+
+
+
+"""
 if do_classification_training:
+    if False:
+        from pbo.map_generators import ClasstrainMapGenerator
+        ClasstrainMapGenerator(
+            fpath_map_patchset=cfg.fpath_map_patchset,
+            fpath_map_classtrain=cfg.fpath_map_classtrain,
+        )
+
     from pbo_classification_training import PBOGenericMILDataset
     PBOGenericMILDataset(
-        csv_path='dataset_csv/tumor_vs_normal_dummy_clean.csv',
+        fpath_map_classtrain=cfg.fpath_map_classtrain,
         dpath_features_pt=cfg.dpath_features_pt,
         shuffle=False, 
         seed=1, 
         print_info=True,
-        label_dict={'normal_tissue':0, 'tumor_tissue':1},
         patient_strat=False,
         ignore=[]
     )
+"""
 
 """
 optionally set pretrained encoder - for prosBiOps thats the res18

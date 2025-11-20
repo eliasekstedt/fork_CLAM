@@ -21,16 +21,8 @@ def save_splits(split_datasets, column_keys, filename, boolean_style=False):
     print()
 
 class Generic_WSI_Classification_Dataset(Dataset):
-    def __init__(self,
-        csv_path = 'dataset_csv/ccrcc_clean.csv',
-        shuffle = False, 
-        seed = 7, 
-        print_info = True,
-        label_dict = {},
-        filter_dict = {},
-        ignore=[],
+    def __init__(self, fpath_map_classtrain,
         patient_strat=False,
-        label_col = None,
         patient_voting = 'max',
         ):
         """
@@ -42,36 +34,19 @@ class Generic_WSI_Classification_Dataset(Dataset):
             label_dict (dict): Dictionary with key, value pairs for converting str labels to int
             ignore (list): List containing class labels to ignore
         """
-        self.label_dict = label_dict
         self.num_classes = len(set(self.label_dict.values()))
-        self.seed = seed
-        self.print_info = print_info
         self.patient_strat = patient_strat
         self.train_ids, self.val_ids, self.test_ids  = (None, None, None)
         self.data_dir = None
-        if not label_col:
-            label_col = 'label'
-        self.label_col = label_col
 
-        slide_data = pd.read_csv(csv_path)
-        print(slide_data)
-        print(csv_path)
-        raise SystemExit
-        slide_data = self.filter_df(slide_data, filter_dict)
-        slide_data = self.df_prep(slide_data, self.label_dict, ignore, self.label_col)
+        self.label_col = 'label'
 
-        ###shuffle data
-        if shuffle:
-            np.random.seed(seed)
-            np.random.shuffle(slide_data)
-
-        self.slide_data = slide_data
+        slide_data = pd.read_csv(fpath_map_classtrain)
+        self.slide_data = slide_data.sample(frac=1)
 
         self.patient_data_prep(patient_voting)
         self.cls_ids_prep()
 
-        if print_info:
-            self.summarize()
 
     def cls_ids_prep(self):
         # store ids corresponding each class at the patient or case level
@@ -102,83 +77,12 @@ class Generic_WSI_Classification_Dataset(Dataset):
         
         self.patient_data = {'case_id':patients, 'label':np.array(patient_labels)}
 
-    @staticmethod
-    def df_prep(data, label_dict, ignore, label_col):
-        if label_col != 'label':
-            data['label'] = data[label_col].copy()
-
-        mask = data['label'].isin(ignore)
-        data = data[~mask]
-        data.reset_index(drop=True, inplace=True)
-        for i in data.index:
-            key = data.loc[i, 'label']
-            data.at[i, 'label'] = label_dict[key]
-
-        return data
-
-    def filter_df(self, df, filter_dict={}):
-        if len(filter_dict) > 0:
-            filter_mask = np.full(len(df), True, bool)
-            # assert 'label' not in filter_dict.keys()
-            for key, val in filter_dict.items():
-                mask = df[key].isin(val)
-                filter_mask = np.logical_and(filter_mask, mask)
-            df = df[filter_mask]
-        return df
-
     def __len__(self):
         if self.patient_strat:
             return len(self.patient_data['case_id'])
 
         else:
             return len(self.slide_data)
-
-    def summarize(self):
-        print("label column: {}".format(self.label_col))
-        print("label dictionary: {}".format(self.label_dict))
-        print("number of classes: {}".format(self.num_classes))
-        print("slide-level counts: ", '\n', self.slide_data['label'].value_counts(sort = False))
-        for i in range(self.num_classes):
-            print('Patient-LVL; Number of samples registered in class %d: %d' % (i, self.patient_cls_ids[i].shape[0]))
-            print('Slide-LVL; Number of samples registered in class %d: %d' % (i, self.slide_cls_ids[i].shape[0]))
-
-    def create_splits(self, k = 3, val_num = (25, 25), test_num = (40, 40), label_frac = 1.0, custom_test_ids = None):
-        settings = {
-                    'n_splits' : k, 
-                    'val_num' : val_num, 
-                    'test_num': test_num,
-                    'label_frac': label_frac,
-                    'seed': self.seed,
-                    'custom_test_ids': custom_test_ids
-                    }
-
-        if self.patient_strat:
-            settings.update({'cls_ids' : self.patient_cls_ids, 'samples': len(self.patient_data['case_id'])})
-        else:
-            settings.update({'cls_ids' : self.slide_cls_ids, 'samples': len(self.slide_data)})
-
-        self.split_gen = generate_split(**settings)
-
-    def set_splits(self,start_from=None):
-        if start_from:
-            ids = nth(self.split_gen, start_from)
-
-        else:
-            ids = next(self.split_gen)
-
-        if self.patient_strat:
-            slide_ids = [[] for i in range(len(ids))] 
-
-            for split in range(len(ids)): 
-                for idx in ids[split]:
-                    case_id = self.patient_data['case_id'][idx]
-                    slide_indices = self.slide_data[self.slide_data['case_id'] == case_id].index.tolist()
-                    slide_ids[split].extend(slide_indices)
-
-            self.train_ids, self.val_ids, self.test_ids = slide_ids[0], slide_ids[1], slide_ids[2]
-
-        else:
-            self.train_ids, self.val_ids, self.test_ids = ids
 
     def get_split_from_df(self, all_splits, split_key='train'):
         split = all_splits[split_key]

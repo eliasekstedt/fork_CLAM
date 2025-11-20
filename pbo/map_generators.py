@@ -1,6 +1,7 @@
 
 import os
 import pandas as pd
+import re
 
 class PatchsetMapGenerator:
     def __init__(self, dpath_mrxs, dpath_patchset, fpath_map_patient, fpath_map_patchset):
@@ -42,3 +43,12 @@ class PatchsetMapGenerator:
                 })
         return pd.DataFrame(patchset_map)
 
+class ClasstrainMapGenerator:
+    def __init__(self, fpath_map_patchset, fpath_map_classtrain):
+        patchset_map = pd.read_csv(fpath_map_patchset)
+        patchset_map['case_id'] = patchset_map['patchset_id'].apply(self.get_case_id)
+        classtrain_map = patchset_map[['case_id', 'slide_id', 'label']]
+        classtrain_map.to_csv(fpath_map_classtrain, index=False)
+
+    def get_case_id(self, patchset_id):
+        return re.match(r"(patient_[^_]+)", patchset_id).group(1)

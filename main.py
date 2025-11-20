@@ -42,11 +42,17 @@ def main(args):
     folds = np.arange(start, end)
     for i in folds:
         seed_torch(args.seed)
-        train_dataset, val_dataset, test_dataset = dataset.return_splits(from_id=False, 
-                csv_path='{}/splits_{}.csv'.format(args.split_dir, i))
+        train_dataset, val_dataset, test_dataset = dataset.return_splits(
+            from_id=False,
+            csv_path='{}/splits_{}.csv'.format(args.split_dir, i),
+        )
         
         datasets = (train_dataset, val_dataset, test_dataset)
-        results, test_auc, val_auc, test_acc, val_acc  = train(datasets, i, args)
+        results, test_auc, val_auc, test_acc, val_acc = train(
+            datasets,
+            i,
+            args,
+        )
         all_test_auc.append(test_auc)
         all_val_auc.append(val_auc)
         all_test_acc.append(test_acc)
@@ -55,8 +61,13 @@ def main(args):
         filename = os.path.join(args.results_dir, 'split_{}_results.pkl'.format(i))
         save_pkl(filename, results)
 
-    final_df = pd.DataFrame({'folds': folds, 'test_auc': all_test_auc, 
-        'val_auc': all_val_auc, 'test_acc': all_test_acc, 'val_acc' : all_val_acc})
+    final_df = pd.DataFrame({
+        'folds':folds,
+        'test_auc':all_test_auc, 
+        'val_auc':all_val_auc,
+        'test_acc':all_test_acc,
+        'val_acc':all_val_acc,
+    })
 
     if len(folds) != args.k:
         save_name = 'summary_partial_{}_{}.csv'.format(start, end)
