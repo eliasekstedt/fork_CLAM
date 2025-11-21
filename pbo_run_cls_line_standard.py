@@ -93,7 +93,7 @@ parser.add_argument(
     '--early_stopping', action='store_true', default=False,
     help='enable early stopping')
 parser.add_argument(
-    '--k', type=int, default=10,
+    '--k', type=int, default=2,
     help='number of folds (default: 10)')
 parser.add_argument(
     '--k_start', type=int, default=-1, 
@@ -158,7 +158,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-fpath_src_csv = 'csv/map_classtrain.csv'
+#fpath_src_csv = 'csv/map_classtrain.csv'
 
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -166,7 +166,7 @@ seed_torch(args.seed)
 
 encoding_size = 1024
 settings = {
-   'num_splits': args.k, 
+    'num_splits': args.k, 
     'k_start': args.k_start,
     'k_end': args.k_end,
     'task': args.task,
@@ -197,9 +197,9 @@ def to_str_label(i_label):
     
 df = pd.read_csv(fpath_src_csv)
 df['label'] = df['label'].apply(to_str_label)
-fpath_src_csv = 'csv/map_classtrain_standard.csv'
 df.to_csv(fpath_src_csv, index=False)
 """
+fpath_src_csv = 'csv/map_classtrain_standard.csv'
 
 
 args.n_classes = 2
@@ -218,7 +218,7 @@ dataset = Generic_MIL_Dataset(
 if not os.path.isdir(args.results_dir):
     os.makedirs(args.results_dir)
 
-args.split_dir = os.path.join(args.results_dir, args.split_dir)
+args.split_dir = 'clsStandardRoot/results/splits/'
 if not os.path.exists(args.split_dir):
     os.makedirs(args.split_dir)
 
@@ -228,6 +228,7 @@ if not os.path.isdir(args.results_dir):
 
 print('split_dir: ', args.split_dir)
 assert os.path.isdir(args.split_dir)
+#raise SystemExit
 
 settings.update({'split_dir': args.split_dir})
 
@@ -239,3 +240,9 @@ print("################# Settings ###################")
 for key, val in settings.items():
     print("{}:  {}".format(key, val))
 
+do(args)
+
+
+"""
+CUDA_VISIBLE_DEVICES=0 python main.py --drop_out 0.25 --early_stopping --lr 2e-4 --k 10  --weighted_sample --bag_loss ce --inst_loss svm --task task_1_tumor_vs_normal --model_type clam_sb --log_data
+"""
