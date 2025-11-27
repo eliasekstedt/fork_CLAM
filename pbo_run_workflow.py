@@ -3,8 +3,9 @@ from pbo_config import *
 
 do_generate_patches = False # .mrxs -> .h5 + create patchset map
 do_feature_extraction = False
-do_classifier_training = False
-do_foldsplitting = True
+do_foldsplitting = False
+do_classifier_training = True
+
 
 if do_generate_patches:
     """
@@ -62,6 +63,19 @@ if do_foldsplitting:
         fpath_map_patchset=cfg.fpath_map_patchset,
         fpath_map_fold_0=cfg.fpath_map_fold_0,
         fpath_map_fold_1=cfg.fpath_map_fold_1,
+    )
+
+if do_classifier_training:
+    from pbo_mil_trainer import MilTrainWrapper
+    MilTrainWrapper(
+        dpath_features_pt=cfg.dpath_features_pt,
+        fpath_map_fold_0=cfg.fpath_map_fold_0,
+        fpath_map_fold_1=cfg.fpath_map_fold_1,
+        hparam=cfg.hparam,
+        state_dict=None,
+        augm=cfg.augm,
+        tag=cfg.tag,
+        device='cuda:0',
     )
 
 

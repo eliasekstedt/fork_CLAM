@@ -56,3 +56,15 @@ cfg.fexparam_batch_size=512
 cfg.fexparam_patch_size=224
 cfg.fexparam_slide_extension='.mrxs'
 cfg.fexparam_no_auto_skip=False
+
+cfg.tag = 'unspecified'
+cfg.hparam = {
+    'dropout':0.25,
+    'batch_size':1,
+    'learning_rate':0.001,
+    'weight_decay':1e-6,
+    'nr_epochs':9,
+}
+cfg.augm = {
+    'placeholder':True
+}
