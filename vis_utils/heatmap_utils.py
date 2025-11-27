@@ -23,6 +23,12 @@ from tqdm import tqdm
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def score2percentile(score, ref):
+    print('***')
+    print(score)
+    print('- -')
+    print(ref)
+    print('***')
+    #raise SystemExit
     percentile = percentileofscore(ref, score)
     return percentile
 
@@ -35,7 +41,12 @@ def drawHeatmap(scores, coords, slide_path=None, wsi_object=None, vis_level = -1
     if vis_level < 0:
         vis_level = wsi.get_best_level_for_downsample(32)
     
-    heatmap = wsi_object.visHeatmap(scores=scores, coords=coords, vis_level=vis_level, **kwargs)
+    heatmap = wsi_object.visHeatmap(
+        scores=scores,
+        coords=coords,
+        vis_level=vis_level,
+        **kwargs
+    )
     return heatmap
 
 def initialize_wsi(wsi_path, seg_mask_path=None, seg_params=None, filter_params=None):
@@ -69,12 +80,12 @@ def compute_from_patches(wsi_object, img_transforms, feature_extractor=None, cla
 
             if attn_save_path is not None:
                 A = model(features, attention_only=True)
-           
+
                 if A.size(0) > 1: #CLAM multi-branch attention
                     A = A[clam_pred]
 
                 A = A.view(-1, 1).cpu().numpy()
-
+                
                 if ref_scores is not None:
                     for score_idx in range(len(A)):
                         A[score_idx] = score2percentile(A[score_idx], ref_scores)

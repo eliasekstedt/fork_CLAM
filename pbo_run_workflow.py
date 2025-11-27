@@ -1,9 +1,10 @@
 
-from pbo.pbo_config import *
+from pbo_config import *
 
 do_generate_patches = False # .mrxs -> .h5 + create patchset map
 do_feature_extraction = False
-do_classification_training = False
+do_classifier_training = False
+do_foldsplitting = True
 
 if do_generate_patches:
     """
@@ -17,21 +18,21 @@ if do_generate_patches:
     note: figure out where to convert slides to HSV color space
 
     """
-    if False:
-        from pbo_create_patchsets import PatchsetGenerator
-        patchset_generator = PatchsetGenerator(
-            dpath_mrxs=cfg.dpath_mrxsRoot,
-            dpath_patchRoot=cfg.dpath_patchRoot,
-            dpath_patchset=cfg.dpath_patchset,
-            dpath_patchset_masks=cfg.dpath_patchset_masks,
-            dpath_patchset_stitch=cfg.dpath_patchset_stitch,
-        )
-        patchset_generator()
+
+    from pbo_create_patchsets import PatchsetGenerator
+    patchset_generator = PatchsetGenerator(
+        dpath_mrxs=cfg.dpath_mrxsRoot,
+        dpath_patchRoot=cfg.dpath_patchRoot,
+        dpath_patchset=cfg.dpath_patchset,
+        dpath_patchset_masks=cfg.dpath_patchset_masks,
+        dpath_patchset_stitch=cfg.dpath_patchset_stitch,
+    )
+    patchset_generator()
 
     """
     generate map1_mrxsSlides.csv
     """
-    from pbo.map_generators import PatchsetMapGenerator
+    from pbo_map_generators import PatchsetMapGenerator
     PatchsetMapGenerator(
         dpath_mrxs=cfg.dpath_mrxsRoot,
         dpath_patchset=cfg.dpath_patchset,
@@ -55,12 +56,27 @@ if do_feature_extraction:
     )
     feature_extractor()
 
-
+if do_foldsplitting:
+    from pbo_map_generators import ClassifierMapGenerator
+    fold_splitter = ClassifierMapGenerator(
+        fpath_map_patchset=cfg.fpath_map_patchset,
+        fpath_map_fold_0=cfg.fpath_map_fold_0,
+        fpath_map_fold_1=cfg.fpath_map_fold_1,
+    )
 
 
 
 """
-if do_classification_training:
+should write down notes to expose what i dont understand about the workflow. for example:
+* when is CLAM used in the workflow and why is it more suited than for example resnetX?
+* what is clustering based on, i.e what are the attributes?
+* when do attention mechanisms come in? feature extraction or after? how do attention mechanisms work?
+
+"""
+
+
+"""
+if do_classifier_training:
     if False:
         from pbo.map_generators import ClasstrainMapGenerator
         ClasstrainMapGenerator(

@@ -6,7 +6,7 @@ import openslide
 #from PIL import Image
 from torchvision.transforms import ToTensor, Compose
 from torch.utils.data import DataLoader, Dataset
-from pbo.pbo_config import cfg
+from pbo_config import cfg
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 

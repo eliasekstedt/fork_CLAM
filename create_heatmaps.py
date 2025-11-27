@@ -25,12 +25,39 @@ from utils.file_utils import save_hdf5
 from tqdm import tqdm
 
 parser = argparse.ArgumentParser(description='Heatmap inference script')
-parser.add_argument('--save_exp_code', type=str, default=None,
-                    help='experiment code')
+parser.add_argument(
+    '--save_exp_code', type=str, default='pbo_exp_code',
+    help='experiment code')
 parser.add_argument('--overlap', type=float, default=None)
-parser.add_argument('--config_file', type=str, default="heatmap_config_template.yaml")
+parser.add_argument('--config_file', type=str, default="config_pbo.yaml")
 args = parser.parse_args()
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def get_pbo_encoder(fpath_model):
+    """
+    this function is code modified from:
+    https://github.com/ozanciga/self-supervised-histopathology?tab=readme-ov-file
+    the .ckpt file can also be downloaded from there.
+    """
+    def load_model_weights(model, weights):
+        model_dict = model.state_dict()
+        weights = {k: v for k, v in weights.items() if k in model_dict}
+        if weights == {}:
+            print('No weight could be loaded..')
+        model_dict.update(weights)
+        model.load_state_dict(model_dict)
+        return model
+
+    import torchvision
+    model = torchvision.models.__dict__['resnet18'](weights=None)
+    state = torch.load(fpath_model, map_location='cuda:0', weights_only=False)
+    state_dict = state['state_dict']
+    for key in list(state_dict.keys()):
+        state_dict[key.replace('model.', '').replace('resnet.', '')] = state_dict.pop(key)
+    model = load_model_weights(model, state_dict)
+    model.fc = torch.nn.Sequential()
+    #model = model.cuda()
+    return model
 
 def infer_single_slide(model, features, label, reverse_label_dict, k=1):
     features = features.to(device)
@@ -92,7 +119,8 @@ if __name__ == '__main__':
                 print (value_key + " : " + str(value_value))
         else:
             print ('\n'+key + " : " + str(value))
-            
+
+    """
     decision = input('Continue? Y/N ')
     if decision in ['Y', 'y', 'Yes', 'yes']:
         pass
@@ -100,6 +128,7 @@ if __name__ == '__main__':
         exit()
     else:
         raise NotImplementedError
+    """   
 
     args = config_dict
     patch_args = argparse.Namespace(**args['patching_arguments'])
@@ -114,12 +143,24 @@ if __name__ == '__main__':
     sample_args = argparse.Namespace(**args['sample_arguments'])
     
     patch_size = tuple([patch_args.patch_size for i in range(2)])
+    patch_args.overlap = 0
+    print('***')
+    print(patch_args.overlap, type(patch_args.overlap))
+
+    print('***')
     step_size = tuple((np.array(patch_size) * (1 - patch_args.overlap)).astype(int))
     print('patch_size: {} x {}, with {:.2f} overlap, step size is {} x {}'.format(patch_size[0], patch_size[1], patch_args.overlap, step_size[0], step_size[1]))
 
     preset = data_args.preset
-    def_seg_params = {'seg_level': -1, 'sthresh': 15, 'mthresh': 11, 'close': 2, 'use_otsu': False, 
-                      'keep_ids': 'none', 'exclude_ids':'none'}
+    def_seg_params = {
+        'seg_level': -1,
+        'sthresh': 15,
+        'mthresh': 11,
+        'close': 2,
+        'use_otsu': False, 
+        'keep_ids': 'none',
+        'exclude_ids':'none'
+    }
     def_filter_params = {'a_t':50.0, 'a_h': 8.0, 'max_n_holes':10}
     def_vis_params = {'vis_level': -1, 'line_thickness': 250}
     def_patch_params = {'use_padding': True, 'contour_fn': 'four_pt'}
@@ -168,7 +209,26 @@ if __name__ == '__main__':
     else:
         raise NotImplementedError
 
-    feature_extractor, img_transforms = get_encoder(encoder_args.model_name, target_img_size=encoder_args.target_img_size)
+
+    feature_extractor = get_pbo_encoder('pbo_model/pbo_res18.ckpt')
+
+    from utils.constants import MODEL2CONSTANTS
+    from utils.transform_utils import get_eval_transforms
+    constants = MODEL2CONSTANTS['pbo']
+    #print(patch_size)
+    #raise SystemExit
+    img_transforms = get_eval_transforms(
+        mean=constants['mean'],
+        std=constants['std'],
+        target_img_size=patch_size[0],
+    )
+
+    """
+    feature_extractor, img_transforms = get_encoder(
+        encoder_args.model_name,
+        target_img_size=encoder_args.target_img_size
+    )
+    """
     _ = feature_extractor.eval()
     feature_extractor = feature_extractor.to(device)
     print('Done!')
@@ -188,7 +248,7 @@ if __name__ == '__main__':
         slide_name = process_stack.loc[i, 'slide_id']
         if data_args.slide_ext not in slide_name:
             slide_name+=data_args.slide_ext
-        print('\nprocessing: ', slide_name)	
+        print('\nprocessing: ', slide_name)
 
         try:
             label = process_stack.loc[i, 'label']
@@ -278,18 +338,37 @@ if __name__ == '__main__':
         mask.save(mask_path)
         
         features_path = os.path.join(r_slide_save_dir, slide_id+'.pt')
+        print('***')
+        print(features_path)
         h5_path = os.path.join(r_slide_save_dir, slide_id+'.h5')
     
 
         ##### check if h5_features_file exists ######
         if not os.path.isfile(h5_path) :
-            _, _, wsi_object = compute_from_patches(wsi_object=wsi_object, 
-                                            model=model, 
-                                            feature_extractor=feature_extractor, 
-                                            img_transforms=img_transforms,
-                                            batch_size=exp_args.batch_size, **blocky_wsi_kwargs, 
-                                            attn_save_path=None, feat_save_path=h5_path, 
-                                            ref_scores=None)				
+            _, _, wsi_object = compute_from_patches(
+                wsi_object=wsi_object, 
+                model=model,
+                feature_extractor=feature_extractor, 
+                img_transforms=img_transforms,
+                batch_size=exp_args.batch_size,
+                **blocky_wsi_kwargs, 
+                attn_save_path=None,
+                feat_save_path=h5_path, 
+                ref_scores=None
+            )
+            """
+            compute_from_patches(
+                wsi_object=wsi_object, 
+                img_transforms=img_transforms,
+                clam_pred=Y_hats[0],
+                model=model, 
+                feature_extractor=feature_extractor, 
+                batch_size=exp_args.batch_size,
+                **wsi_kwargs, 
+                attn_save_path=save_path,
+                ref_scores=ref_scores
+            )
+            """
         
         ##### check if pt_features_file exists ######
         if not os.path.isfile(features_path):
@@ -303,7 +382,13 @@ if __name__ == '__main__':
         process_stack.loc[i, 'bag_size'] = len(features)
         
         wsi_object.saveSegmentation(mask_file)
-        Y_hats, Y_hats_str, Y_probs, A = infer_single_slide(model, features, label, reverse_label_dict, exp_args.n_classes)
+        Y_hats, Y_hats_str, Y_probs, A = infer_single_slide(
+            model,
+            features,
+            label,
+            reverse_label_dict,
+            exp_args.n_classes
+        )
         del features
         
         if not os.path.isfile(block_map_save_path): 
@@ -366,12 +451,17 @@ if __name__ == '__main__':
             ref_scores = None
         
         if heatmap_args.calc_heatmap:
-            compute_from_patches(wsi_object=wsi_object, 
-                                img_transforms=img_transforms,
-                                clam_pred=Y_hats[0], model=model, 
-                                feature_extractor=feature_extractor, 
-                                batch_size=exp_args.batch_size, **wsi_kwargs, 
-                                attn_save_path=save_path,  ref_scores=ref_scores)
+            compute_from_patches(
+                wsi_object=wsi_object, 
+                img_transforms=img_transforms,
+                clam_pred=Y_hats[0],
+                model=model, 
+                feature_extractor=feature_extractor, 
+                batch_size=exp_args.batch_size,
+                **wsi_kwargs, 
+                attn_save_path=save_path,
+                ref_scores=ref_scores
+            )
 
         if not os.path.isfile(save_path):
             print('heatmap {} not found'.format(save_path))
@@ -404,13 +494,14 @@ if __name__ == '__main__':
             pass
         
         else:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-            heatmap = drawHeatmap(scores, coords, slide_path, wsi_object=wsi_object,  
-                                  cmap=heatmap_args.cmap, alpha=heatmap_args.alpha, **heatmap_vis_args, 
-                                  binarize=heatmap_args.binarize, 
-                                    blank_canvas=heatmap_args.blank_canvas,
-                                    thresh=heatmap_args.binary_thresh,  patch_size = vis_patch_size,
-                                    overlap=patch_args.overlap, 
-                                    top_left=top_left, bot_right = bot_right)
+            heatmap = drawHeatmap(
+                scores, coords, slide_path, wsi_object=wsi_object,  
+                cmap=heatmap_args.cmap, alpha=heatmap_args.alpha, **heatmap_vis_args, 
+                binarize=heatmap_args.binarize, 
+                blank_canvas=heatmap_args.blank_canvas,
+                thresh=heatmap_args.binary_thresh,  patch_size = vis_patch_size,
+                overlap=patch_args.overlap, 
+                top_left=top_left, bot_right = bot_right)
             if heatmap_args.save_ext == 'jpg':
                 heatmap.save(os.path.join(p_slide_save_dir, heatmap_save_name), quality=100)
             else:

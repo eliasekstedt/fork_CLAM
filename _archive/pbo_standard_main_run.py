@@ -79,7 +79,6 @@ parser.add_argument('--embed_dim', type=int, default=512)
 parser.add_argument('--opt', type=str, choices = ['adam', 'sgd'], default='adam')
 parser.add_argument('--drop_out', type=float, default=0.25, help='dropout')
 parser.add_argument('--task', type=str, choices=['task_1_tumor_vs_normal',  'task_2_tumor_subtyping', 'pbo'], default='pbo')
-
 parser.add_argument(
     '--bag_loss', type=str, choices=['svm', 'ce'], default='ce',
     help='slide-level classification loss function (default: ce)')
@@ -93,7 +92,7 @@ parser.add_argument(
     '--early_stopping', action='store_true', default=False,
     help='enable early stopping')
 parser.add_argument(
-    '--k', type=int, default=2,
+    '--k', type=int, default=4,
     help='number of folds (default: 10)')
 parser.add_argument(
     '--k_start', type=int, default=-1, 
@@ -246,3 +245,4 @@ do(args)
 """
 CUDA_VISIBLE_DEVICES=0 python main.py --drop_out 0.25 --early_stopping --lr 2e-4 --k 10  --weighted_sample --bag_loss ce --inst_loss svm --task task_1_tumor_vs_normal --model_type clam_sb --log_data
 """
+

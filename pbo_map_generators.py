@@ -43,12 +43,29 @@ class PatchsetMapGenerator:
                 })
         return pd.DataFrame(patchset_map)
 
-class ClasstrainMapGenerator:
-    def __init__(self, fpath_map_patchset, fpath_map_classtrain):
+class ClassifierMapGenerator:
+    def __init__(self, fpath_map_patchset, fpath_map_fold_0, fpath_map_fold_1):
         patchset_map = pd.read_csv(fpath_map_patchset)
         patchset_map['case_id'] = patchset_map['patchset_id'].apply(self.get_case_id)
-        classtrain_map = patchset_map[['case_id', 'slide_id', 'label']]
-        classtrain_map.to_csv(fpath_map_classtrain, index=False)
+        map_classifier = patchset_map[['case_id', 'slide_id', 'label']]
+        map_fold_0, map_fold_1 = self.split_2fold(map_classifier)
+        map_fold_0.to_csv(fpath_map_fold_0, index=False)
+        map_fold_1.to_csv(fpath_map_fold_1, index=False)
 
     def get_case_id(self, patchset_id):
         return re.match(r"(patient_[^_]+)", patchset_id).group(1)
+    
+    def split_2fold(self, map_classifier):
+        map_classifier = map_classifier.sample(frac=1)
+        patient_ids = map_classifier['case_id'].unique()
+        wedge = len(patient_ids) // 2
+        fold_0_patient_ids = patient_ids[:wedge]
+        fold_1_patient_ids = patient_ids[wedge:]
+        map_fold_0 = map_classifier[map_classifier['case_id'].isin(fold_0_patient_ids)]
+        map_fold_1 = map_classifier[map_classifier['case_id'].isin(fold_1_patient_ids)]
+
+        assert map_fold_0.shape[0] + map_fold_1.shape[0] == map_classifier.shape[0]
+        assert map_fold_0[map_fold_0['case_id'].isin(fold_1_patient_ids)].shape[0] == 0
+        assert map_fold_1[map_fold_1['case_id'].isin(fold_0_patient_ids)].shape[0] == 0
+
+        return map_fold_0, map_fold_1
