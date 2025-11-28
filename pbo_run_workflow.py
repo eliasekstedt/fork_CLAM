@@ -67,7 +67,7 @@ if do_foldsplitting:
 
 if do_classifier_training:
     from pbo_mil_trainer import MilTrainWrapper
-    MilTrainWrapper(
+    wrapper = MilTrainWrapper(
         dpath_features_pt=cfg.dpath_features_pt,
         fpath_map_fold_0=cfg.fpath_map_fold_0,
         fpath_map_fold_1=cfg.fpath_map_fold_1,
@@ -77,6 +77,8 @@ if do_classifier_training:
         tag=cfg.tag,
         device='cuda:0',
     )
+    from pbo_mil_trainer import plot_performance
+    plot_performance(wrapper.trainer, wrapper.runpath)
 
 
 

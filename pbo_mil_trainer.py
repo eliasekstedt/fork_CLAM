@@ -8,32 +8,26 @@ import torch.nn.functional as F
 
 from datetime import datetime
 
-"""
-class MIL_fc(nn.Module):
-    # modified from models/model_mil/MIL_fc
-    def __init__(self, dropout):
-        super().__init__()
-        embed_dim = 1024
-        size = [embed_dim, 512]
-        fc = [nn.Linear(size[0], size[1]), nn.ReLU(), nn.Dropout(dropout)]
-        self.fc = nn.Sequential(*fc)
-        self.classifier =  nn.Linear(size[1], 2)
-        self.top_k = 1
+def plot_performance(protocol, runpath):
+    epochs = range(1, len(protocol.valcost) + 1)
+    traincol_0 = 'tab:blue'
+    testcol_0 = 'tab:red'
+    import matplotlib.pyplot as plt
+    plt.plot(epochs, protocol.traincost, traincol_0, label='train_0')
+    plt.plot(epochs, protocol.valcost, testcol_0, label='val_0')
+    if False:
+        traincol_1 = 'tab:orange'
+        testcol_1 = 'tab:brown'
+        plt.plot(epochs, protocol.traincost_1, traincol_1, label='train_1')
+        plt.plot(epochs, protocol.valcost_1, testcol_1, label='val_1')
+    #plt.ylim([0, 1.2*protocol.traincost_0[0]])
+    plt.legend()
+    plt.ylabel('Cost')
+    plt.tight_layout()
+    plt.savefig(f'{runpath}performance.png')
+    plt.figure()
+    plt.close('all')
 
-    def forward(self, h):
-        print(h)
-        #raise SystemExit
-        h = self.fc(h)
-        logits  = self.classifier(h) # K x 2
-        
-        y_probs = F.softmax(logits, dim = 1)
-        top_instance_idx = torch.topk(y_probs[:, 1], self.top_k, dim=0)[1].view(1,)
-        top_instance = torch.index_select(logits, dim=0, index=top_instance_idx)
-        Y_hat = torch.topk(top_instance, 1, dim = 1)[1]
-        Y_prob = F.softmax(top_instance, dim = 1)
-
-        return top_instance, Y_prob, Y_hat, y_probs
-"""
 
 class MILReader(Dataset):
     def __init__(self, fpath_map, dpath_features_pt, mode):
@@ -50,7 +44,7 @@ class MILReader(Dataset):
         slide_id = row['slide_id']
         fpath_raw_features = os.path.join(self.dpath_features_pt, f"{slide_id}.pt")
         features = torch.load(fpath_raw_features)
-        label = torch.tensor([row['label'].item()], dtype=torch.float32)
+        label = torch.tensor(row['label'].item(), dtype=torch.long)
         #print(features.shape)
         if self.mode == 'train':
             return features, label
@@ -79,16 +73,9 @@ class MILTrainer:
         cost, performance = 0, 0
         for features, labels in trainloader:
             features, labels = features.squeeze(0).to(device), labels.to(device)
-            logits, Y_prob, Y_hat, A_raw, results_dict = self.model(features)
-            print(logits)
-            print(Y_prob)
-            print(Y_hat)
-            print(A_raw)
-            print(results_dict)
-            raise SystemExit
-        
-            logits = self.model(features)
-            loss = self.criterion(logits, labels)
+            logits, _, Y_hat, results_dict = self.model(features, labels, True)
+            raw_loss = self.criterion(logits, labels)
+            loss = 0.7 * raw_loss + (1 - 0.7) * results_dict['instance_loss']
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -100,10 +87,14 @@ class MILTrainer:
     def val_epoch(self, valloader, device):
         self.model.eval()
         cost, performance = 0, 0
-        with torch.no_grad():
+        with torch.inference_mode():
             for features, labels in valloader:
-                features, labels = features.to(device), labels.to(device)
-                logits = self.model(features)
+                features, labels = features.squeeze(0).to(device), labels.to(device)
+                logits, _, _, _ = self.model(
+                    features,
+                    label=labels,
+                    instance_eval=True,
+                )
                 loss = self.criterion(logits, labels)
                 cost += loss.item() / len(valloader)
                 performance += self.get_nr_accurate(logits, labels) / len(valloader.dataset)
@@ -151,9 +142,9 @@ class MilTrainWrapper:
         )
         
         model = self.init_model(hparam['dropout'], device)
-        runpath = self.init_run(hparam, augm, tag, device)
-        self.learn_parameters(
-            runpath=runpath,
+        self.runpath = self.init_run(hparam, augm, tag, device)
+        self.trainer = self.learn_parameters(
+            runpath=self.runpath,
             loader_0=loader_0,
             loader_1=loader_1,
             model=model,
@@ -217,4 +208,4 @@ class MilTrainWrapper:
             runpath=runpath,
             device=device,
         )
-        
+        return trainer

@@ -15,8 +15,7 @@ class Attn_Net_Gated(nn.Module):
             nn.Linear(L, D),
             nn.Tanh()]
         
-        self.attention_b = [nn.Linear(L, D),
-                            nn.Sigmoid()]
+        self.attention_b = [nn.Linear(L, D), nn.Sigmoid()]
         if dropout:
             self.attention_a.append(nn.Dropout(0.25))
             self.attention_b.append(nn.Dropout(0.25))
@@ -36,13 +35,11 @@ class Attn_Net_Gated(nn.Module):
 class CLAM_SB(nn.Module):
     def __init__(self, dropout):
         super().__init__()
-        from topk.svm import SmoothTop1SVM
-        instance_loss_fn = SmoothTop1SVM(n_classes=2)
         n_classes, embed_dim = 2, 512
         size = [embed_dim, 512, 256]
         fc = [nn.Linear(size[0], size[1]), nn.ReLU(), nn.Dropout(dropout)]
 
-        attention_net = Attn_Net_Gated(L = size[1], D = size[2], dropout = dropout, n_classes = 1)
+        attention_net = Attn_Net_Gated(L=size[1], D=size[2], dropout=dropout, n_classes=1)
 
         fc.append(attention_net)
         self.attention_net = nn.Sequential(*fc)
@@ -50,7 +47,8 @@ class CLAM_SB(nn.Module):
         instance_classifiers = [nn.Linear(size[1], 2) for _ in range(n_classes)]
         self.instance_classifiers = nn.ModuleList(instance_classifiers)
         self.k_sample = 8
-        self.instance_loss_fn = instance_loss_fn
+        from topk.svm import SmoothTop1SVM
+        self.instance_loss_fn = SmoothTop1SVM(n_classes=2).cuda()
         self.n_classes = n_classes
     
     @staticmethod
@@ -89,16 +87,13 @@ class CLAM_SB(nn.Module):
         top_p = torch.index_select(h, dim=0, index=top_p_ids)
         p_targets = self.create_negative_targets(self.k_sample, device)
         logits = classifier(top_p)
-        p_preds = torch.topk(logits, 1, dim = 1)[1].squeeze(1)
+        p_preds = torch.topk(logits, 1, dim=1)[1].squeeze(1)
         instance_loss = self.instance_loss_fn(logits, p_targets)
         return instance_loss, p_preds, p_targets
 
-    def forward(self, h, label=None, instance_eval=False, return_features=False, attention_only=False):
+    def forward(self, h, label=None, instance_eval=False):
         A, h = self.attention_net(h)  # NxK        
         A = torch.transpose(A, 1, 0)  # KxN
-        if attention_only:
-            return A
-        A_raw = A
         A = F.softmax(A, dim=1)  # softmax over N
 
         if instance_eval:
@@ -119,13 +114,14 @@ class CLAM_SB(nn.Module):
                 
         M = torch.mm(A, h) 
         logits = self.classifiers(M)
-        Y_hat = torch.topk(logits, 1, dim = 1)[1]
-        Y_prob = F.softmax(logits, dim = 1)
+        Y_hat = torch.topk(logits, 1, dim=1)[1]
+        Y_prob = F.softmax(logits, dim=1)
         if instance_eval:
-            results_dict = {'instance_loss': total_inst_loss, 'inst_labels': np.array(all_targets), 
-            'inst_preds': np.array(all_preds)}
+            results_dict = {
+                'instance_loss': total_inst_loss,
+                'inst_labels': np.array(all_targets), 
+                'inst_preds': np.array(all_preds)
+            }
         else:
             results_dict = {}
-        if return_features:
-            results_dict.update({'features': M})
-        return logits, Y_prob, Y_hat, A_raw, results_dict
+        return logits, Y_prob, Y_hat, results_dict
