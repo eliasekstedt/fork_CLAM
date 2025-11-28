@@ -67,6 +67,9 @@ if do_foldsplitting:
 
 if do_classifier_training:
     from pbo_mil_trainer import MilTrainWrapper
+    """
+    why does the train epoch factor in instance loss in loss calculation but not val epoch?
+    """
     wrapper = MilTrainWrapper(
         dpath_features_pt=cfg.dpath_features_pt,
         fpath_map_fold_0=cfg.fpath_map_fold_0,
@@ -77,10 +80,6 @@ if do_classifier_training:
         tag=cfg.tag,
         device='cuda:0',
     )
-    from pbo_mil_trainer import plot_performance
-    plot_performance(wrapper.trainer, wrapper.runpath)
-
-
 
 """
 should write down notes to expose what i dont understand about the workflow. for example:

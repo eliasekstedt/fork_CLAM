@@ -117,7 +117,7 @@ class MILTrainer:
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
-        header = f'epoch\tloss\taccuracy\ttime'
+        header = f'epoch\tloss\t\taccuracy\ttime'
         print(header)
         for i in range(1, nr_epochs+1):
             self.train_epoch(trainloader, device)
@@ -142,9 +142,9 @@ class MilTrainWrapper:
         )
         
         model = self.init_model(hparam['dropout'], device)
-        self.runpath = self.init_run(hparam, augm, tag, device)
-        self.trainer = self.learn_parameters(
-            runpath=self.runpath,
+        runpath = self.init_run(hparam, augm, tag, device)
+        trainer = self.learn_parameters(
+            runpath=runpath,
             loader_0=loader_0,
             loader_1=loader_1,
             model=model,
@@ -154,6 +154,7 @@ class MilTrainWrapper:
             device=device,
         )
 
+        plot_performance(trainer, runpath)
 
     def init_loaders(self, dpath_features_pt, fpath_map_fold_0, fpath_map_fold_1, batch_size):
         print('initiating loaders ...')

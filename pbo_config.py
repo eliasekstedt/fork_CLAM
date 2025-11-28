@@ -59,11 +59,11 @@ cfg.fexparam_no_auto_skip=False
 
 cfg.tag = 'unspecified'
 cfg.hparam = {
-    'dropout':0.25,
+    'dropout': 0.0, #0.25,
     'batch_size':1,
-    'learning_rate':0.001,
+    'learning_rate':0.01,
     'weight_decay':1e-6,
-    'nr_epochs':60,
+    'nr_epochs':200,
 }
 cfg.augm = {
     'placeholder':True

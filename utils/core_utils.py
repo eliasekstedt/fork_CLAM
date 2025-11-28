@@ -110,10 +110,6 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
             instance_eval=True
         )
 
-        print(logits, label, Y_hat, len(loader.dataset))
-        if not (logits[0][0] < 0 or logits[0][1] < 0):
-            raise SystemExit
-
         acc_logger.log(Y_hat, label)
         loss = loss_fn(logits, label)
         loss_value = loss.item()
@@ -146,6 +142,8 @@ def train_loop_clam(epoch, model, loader, optimizer, n_classes, bag_weight, writ
     # calculate loss and error for epoch
     train_loss /= len(loader)
     train_error /= len(loader)
+    with open('log_train.txt', 'a') as file:
+        file.write(f'{epoch} {train_loss}, {train_error}\n')
     
     if inst_count > 0:
         train_inst_loss /= inst_count
@@ -213,6 +211,8 @@ def validate_clam(cur, epoch, model, loader, n_classes, early_stopping = None, w
 
     val_error /= len(loader)
     val_loss /= len(loader)
+    with open('log_val.txt', 'a') as file:
+        file.write(f'{epoch}, {val_loss}, {val_error}\n')
 
     if n_classes == 2:
         auc = roc_auc_score(labels, prob[:, 1])
