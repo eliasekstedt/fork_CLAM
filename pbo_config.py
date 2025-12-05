@@ -22,6 +22,8 @@ cfg.dpath_patchset_stitch = os.path.join(cfg.dpath_patchRoot, 'stitches')
 
 cfg.dpath_featuresRoot = os.path.join(cfg.dpath_dataRoot, 'data2_features/') #.h5 + .pt
 cfg.dpath_features_pt = os.path.join(cfg.dpath_featuresRoot, 'pt_files/')
+#cfg.dpath_features_pt = '../prosBiOps_extra/synDataGen/synPt_r20/'
+
 cfg.dpath_features_h5 = os.path.join(cfg.dpath_featuresRoot, 'h5_files/')
 
 cfg.dpath_classifierRoot = os.path.join(cfg.dpath_dataRoot, 'data3_classifier')
@@ -50,21 +52,22 @@ cfg.fpath_map_fold_1 = os.path.join(cfg.dpath_milFolds, 'map_fold_1.csv')
 cfg.fpath_fexmodel = os.path.join(cfg.dpath_dataRoot, 'pbo_fexmodel.ckpt')
 
 
-
-
 cfg.fexparam_batch_size=512
 cfg.fexparam_patch_size=224
 cfg.fexparam_slide_extension='.mrxs'
 cfg.fexparam_no_auto_skip=False
 
-cfg.tag = 'unspecified'
+
+cfg.tag = 'synData_r20'
 cfg.hparam = {
-    'dropout': 0.0, #0.25,
+    'dropout': 0.0,
     'batch_size':1,
     'learning_rate':0.01,
     'weight_decay':1e-6,
-    'nr_epochs':200,
+    'nr_epochs':250,
 }
 cfg.augm = {
     'placeholder':True
 }
+
+cfg.state_dict = ''

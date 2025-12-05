@@ -15,11 +15,6 @@ def plot_performance(protocol, runpath):
     import matplotlib.pyplot as plt
     plt.plot(epochs, protocol.traincost, traincol_0, label='train_0')
     plt.plot(epochs, protocol.valcost, testcol_0, label='val_0')
-    if False:
-        traincol_1 = 'tab:orange'
-        testcol_1 = 'tab:brown'
-        plt.plot(epochs, protocol.traincost_1, traincol_1, label='train_1')
-        plt.plot(epochs, protocol.valcost_1, testcol_1, label='val_1')
     #plt.ylim([0, 1.2*protocol.traincost_0[0]])
     plt.legend()
     plt.ylabel('Cost')
@@ -28,6 +23,11 @@ def plot_performance(protocol, runpath):
     plt.figure()
     plt.close('all')
 
+def file_it(file_name, message, to_terminal=False):
+    if to_terminal:
+        print(message)
+    with open(file_name, 'a') as file:
+        file.write(f'{message}\n')
 
 class MILReader(Dataset):
     def __init__(self, fpath_map, dpath_features_pt, mode):
@@ -45,7 +45,6 @@ class MILReader(Dataset):
         fpath_raw_features = os.path.join(self.dpath_features_pt, f"{slide_id}.pt")
         features = torch.load(fpath_raw_features)
         label = torch.tensor(row['label'].item(), dtype=torch.long)
-        #print(features.shape)
         if self.mode == 'train':
             return features, label
         else:
@@ -54,13 +53,16 @@ class MILReader(Dataset):
 
 class MILTrainer:
     def __init__(self, model, lr, weight_decay, device):
-        #from topk.svm import SmoothTop1SVM
         self.criterion = nn.CrossEntropyLoss().to(device)
         self.traincost, self.valcost = [], []
         self.trainperformance, self.valperformance = [], []
         self.current_best = None
         self.model = model
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(),
+            lr=lr,
+            weight_decay=weight_decay
+        )
 
     def get_nr_accurate(self, logits, labels):
         logits = logits.argmax(1)
@@ -71,9 +73,13 @@ class MILTrainer:
     def train_epoch(self, trainloader, device):
         self.model.train()
         cost, performance = 0, 0
+        #delme_pl_pair = []
         for features, labels in trainloader:
             features, labels = features.squeeze(0).to(device), labels.to(device)
             logits, _, Y_hat, results_dict = self.model(features, labels, True)
+
+            #delme_pl_pair.append((logits.argmax(1).item(), labels.item()))
+
             raw_loss = self.criterion(logits, labels)
             loss = 0.7 * raw_loss + (1 - 0.7) * results_dict['instance_loss']
             self.optimizer.zero_grad()
@@ -81,6 +87,11 @@ class MILTrainer:
             self.optimizer.step()
             cost += loss.item() / len(trainloader)
             performance += self.get_nr_accurate(logits, labels) / len(trainloader.dataset)
+        """[print(pair) for pair in delme_pl_pair]
+        print(sum([pair[0] for pair in delme_pl_pair]))
+        print(sum([pair[1] for pair in delme_pl_pair]))
+        print(len(delme_pl_pair))
+        raise SystemExit"""
         self.traincost += [cost]
         self.trainperformance += [performance]
 
@@ -132,7 +143,7 @@ def record_history(path_model):
 
 class MilTrainWrapper:
     def __init__(self, dpath_features_pt, fpath_map_fold_0,
-        fpath_map_fold_1, hparam, state_dict, augm, tag, device):
+        fpath_map_fold_1, hparam, fpath_state_dict, augm, tag, device):
 
         loader_0, loader_1 = self.init_loaders(
             dpath_features_pt=dpath_features_pt,
@@ -141,8 +152,8 @@ class MilTrainWrapper:
             batch_size=hparam['batch_size'],
         )
         
-        model = self.init_model(hparam['dropout'], device)
         runpath = self.init_run(hparam, augm, tag, device)
+        model = self.init_model(runpath, fpath_state_dict, hparam['dropout'], device)
         trainer = self.learn_parameters(
             runpath=runpath,
             loader_0=loader_0,
@@ -192,10 +203,16 @@ class MilTrainWrapper:
         print(for_terminal)
         return runpath
 
-    def init_model(self, dropout, device):
+    def init_model(self, runpath, fpath_state_dict, dropout, device):
         print('initiating model ...')
         from pbo_mil_model import CLAM_SB
         model = CLAM_SB(dropout)
+
+        if not fpath_state_dict == '':
+            model.load_state_dict(torch.load(fpath_state_dict, map_location='cuda:0'))
+            message = f"model loaded from: {fpath_state_dict}"
+            file_it(f'{runpath}log.txt', message, True)
+
         return model.to(device)
     
     def learn_parameters(self, runpath, loader_0, loader_1, model,

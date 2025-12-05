@@ -10,7 +10,9 @@ import pandas as pd
 from tqdm import tqdm
 
 class PatchsetGenerator:
-	def __init__(self, dpath_mrxs, dpath_patchRoot, dpath_patchset, dpath_patchset_masks, dpath_patchset_stitch):
+	def __init__(self, dpath_mrxs, dpath_patchRoot, dpath_patchset, dpath_patchset_masks,
+		dpath_patchset_stitch
+	):
 		self.dpath_mrxs = dpath_mrxs
 		self.dpath_patchRoot = dpath_patchRoot
 		self.dpath_patchset = dpath_patchset
@@ -23,7 +25,7 @@ class PatchsetGenerator:
 			'sthresh': 8,
 			'mthresh': 7,
 			'close': 4,
-			'use_otsu': False,
+			'use_otsu': True,
 			'keep_ids': 'none',
 			'exclude_ids': 'none'
 		}
@@ -48,7 +50,8 @@ class PatchsetGenerator:
 		if self.process_list is None:
 			df = initialize_df(
 				slides,
-				self.seg_params, self.filter_params, self.vis_params, self.patch_params)
+				self.seg_params, self.filter_params, self.vis_params, self.patch_params
+			)
 		
 		else:
 			df = pd.read_csv(self.process_list)

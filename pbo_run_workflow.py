@@ -1,7 +1,7 @@
 
 from pbo_config import *
 
-do_generate_patches = False # .mrxs -> .h5 + create patchset map
+do_generate_patches = False
 do_feature_extraction = False
 do_foldsplitting = False
 do_classifier_training = True
@@ -70,12 +70,21 @@ if do_classifier_training:
     """
     why does the train epoch factor in instance loss in loss calculation but not val epoch?
     """
+
+    if cfg.state_dict == 'history': # if true, select most recent model
+        with open(f"run/history/history.txt", 'r') as file:
+            fpath_state_dict = file.readlines()[-1]
+            while not fpath_state_dict.endswith('model.pth'):
+                fpath_state_dict = fpath_state_dict[:-1]
+    else:
+        fpath_state_dict = cfg.state_dict
+
     wrapper = MilTrainWrapper(
         dpath_features_pt=cfg.dpath_features_pt,
         fpath_map_fold_0=cfg.fpath_map_fold_0,
         fpath_map_fold_1=cfg.fpath_map_fold_1,
         hparam=cfg.hparam,
-        state_dict=None,
+        fpath_state_dict=fpath_state_dict,
         augm=cfg.augm,
         tag=cfg.tag,
         device='cuda:0',
@@ -147,6 +156,11 @@ CUDA_VISIBLE_DEVICES=0 python eval.py --k 10 --models_exp_code task_1_tumor_vs_n
 """
 heatmap visualisation
 CUDA_VISIBLE_DEVICES=0 python create_heatmaps.py --config config_template.yaml
+
+
+“(1) Can we get insight into the role of surface protein density and the role of different structural proteins by comparing the fusion kinetics of different particles.
+(2) what can we learn about the impact of the influenza matrix protein on membrane fusion with generated virus-like particles as specified.”
+
 """
 
 
