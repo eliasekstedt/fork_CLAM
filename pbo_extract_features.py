@@ -17,7 +17,7 @@ from utils.transform_utils import get_eval_transforms
 class FeatureExtractor:
     def __init__(
         self, dpath_patchset, dpath_mrxsRoot, dpath_features_pt, dpath_features_h5, fpath_map_patchset,
-        fpath_model, batch_size, patch_size, slide_extension, no_auto_skip
+        fpath_model, batch_size, patch_size, slide_extension, no_auto_skip,
     ):
         self.dpath_patchset = dpath_patchset
         self.dpath_mrxsRoot = dpath_mrxsRoot
@@ -33,7 +33,7 @@ class FeatureExtractor:
     def __call__(self):
         print('initializing dataset')
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.fpath_map_patchset = self.fpath_map_patchset
+
         if self.fpath_map_patchset is None:
             raise NotImplementedError
 

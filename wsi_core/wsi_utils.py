@@ -52,7 +52,23 @@ def savePatchIter_bag_hdf5(patch):
 
     file.close()
 
-def save_hdf5(output_path, asset_dict, attr_dict= None, mode='a'):
+def save_hdf5(output_path, asset_dict, attr_dict=None, mode='a'):
+    #####################
+    """
+    print('now in save_hdf5')
+    print(output_path)
+    print('asset_dict') # list of coordinate pairs
+    for key in asset_dict.keys():
+        print(key, asset_dict[key])
+    print('\nattr_dict') # list of coordinate pairs (seemigly same as asset_dict)
+    if not attr_dict:
+        print(attr_dict)
+    else:
+        for key in asset_dict.keys():
+            print(key, asset_dict[key])
+    #raise SystemExit
+    """
+    #####################
     file = h5py.File(output_path, mode)
     for key, val in asset_dict.items():
         data_shape = val.shape
@@ -193,7 +209,7 @@ def DrawMapFromCoords(canvas, wsi_object, coords, patch_size, vis_level, indices
     total = len(indices)
         
     patch_size = tuple(np.ceil((np.array(patch_size)/np.array(downsamples))).astype(np.int32))
-    print('downscaled patch size: {}x{}'.format(patch_size[0], patch_size[1]))
+    #print('downscaled patch size: {}x{}'.format(patch_size[0], patch_size[1]))
     
     for idx in tqdm(range(total)):        
         patch_id = indices[idx]
@@ -216,14 +232,14 @@ def StitchPatches(hdf5_file_path, downscale=16, draw_grid=False, bg_color=(0,0,0
         else:
             w, h = dset.attrs['level_dim']
 
-    print('original size: {} x {}'.format(w, h))
+    #print('original size: {} x {}'.format(w, h))
     w = w // downscale
     h = h //downscale
     coords = (coords / downscale).astype(np.int32)
-    print('downscaled size for stiching: {} x {}'.format(w, h))
-    print(f'number of patches: {len(coords)}')
+    #print('downscaled size for stiching: {} x {}'.format(w, h))
+    #print(f'number of patches: {len(coords)}')
     img_shape = dset[0].shape
-    print('patch shape: {}'.format(img_shape))
+    #print('patch shape: {}'.format(img_shape))
     downscaled_shape = (img_shape[1] // downscale, img_shape[0] // downscale)
 
     if w*h > Image.MAX_IMAGE_PIXELS: 
@@ -242,23 +258,23 @@ def StitchPatches(hdf5_file_path, downscale=16, draw_grid=False, bg_color=(0,0,0
 def StitchCoords(hdf5_file_path, wsi_object, downscale=16, draw_grid=False, bg_color=(0,0,0), alpha=-1):
     wsi = wsi_object.getOpenSlide()
     w, h = wsi.level_dimensions[0]
-    print('original size: {} x {}'.format(w, h))
+    #print('original size: {} x {}'.format(w, h))
     
     vis_level = wsi.get_best_level_for_downsample(downscale)
     w, h = wsi.level_dimensions[vis_level]
-    print('downscaled size for stiching: {} x {}'.format(w, h))
+    #print('downscaled size for stiching: {} x {}'.format(w, h))
 
     with h5py.File(hdf5_file_path, 'r') as file:
         dset = file['coords']
         coords = dset[:]
-        print('start stitching {}'.format(dset.attrs['name']))
+        #print('start stitching {}'.format(dset.attrs['name']))
         patch_size = dset.attrs['patch_size']
         patch_level = dset.attrs['patch_level']
     
-    print(f'number of patches: {len(coords)}')
-    print(f'patch size: {patch_size} x {patch_size} patch level: {patch_level}')
+    #print(f'number of patches: {len(coords)}')
+    #print(f'patch size: {patch_size} x {patch_size} patch level: {patch_level}')
     patch_size = tuple((np.array((patch_size, patch_size)) * wsi.level_downsamples[patch_level]).astype(np.int32))
-    print(f'ref patch size: {patch_size} x {patch_size}')
+    #print(f'ref patch size: {patch_size} x {patch_size}')
 
     if w*h > Image.MAX_IMAGE_PIXELS: 
         raise Image.DecompressionBombError("Visualization Downscale %d is too large" % downscale)

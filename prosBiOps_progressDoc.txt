@@ -1,10 +1,28 @@
-t0:
+event0:
 - clam_sb doesnt learn properly. creating synthetic dataset where i can vary the number of patch encodings that represent positive evidence in a bag to see if it is the data that is the problem or something else. i can also get an intuition for the rate of positive evidence or how distinguished the positive evidence is in a bag of real data.
 - when the number of positive patches in a positive bag is ~10% the model has the same learning problems as with the real data. training and validation losses and performance behave similarly.
 - this suggests that the number of positive examples in a bag is too low (given the signal).
 - have a look at the image patches to see if this suspicion can be confirmed. if so, make sure to redo data processing with propper parameters.
 - 20% also seems too low.
 
-t1:
+event1:
 - make a note that feature extraction model is downloaded from https://github.com/ozanciga/self-supervised-histopathology/releases/tag/tenpercent
 
+event2:
+- is otsu really to prefer? False seems to generate more reasonable contours. im assuming what is contoured is what is cropped into patches.
+
+event3:
+ - need to find parameters so relevant wsi areas are maximized and irelevant are minimized.
+ - it doesnt seem like parameters such as use_otsu affects what is contoured in.
+
+Done so far (10/12/25):
+* implemented a running pipeline from feature extraction to classification.
+* created a synthetic dataset to investigate why the model is not learning.
+* mapped out wsi2patch process (no documentation).
+* tested different preprocessing parameters.
+
+
+Goals:
+* Get CLAM model to learn.
+* Reproduce articles results.
+* draw conclusions and compare with article conclusions.

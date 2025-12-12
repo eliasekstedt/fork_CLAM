@@ -1,7 +1,5 @@
 import math
 import os
-import time
-import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import multiprocessing as mp
 import cv2
@@ -9,27 +7,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openslide
 from PIL import Image
-import pdb
-import h5py
 import math
-from wsi_core.wsi_utils import savePatchIter_bag_hdf5, initialize_hdf5_bag, coord_generator, save_hdf5, sample_indices, screen_coords, isBlackPatch, isWhitePatch, to_percentiles
-import itertools
+from wsi_core.wsi_utils import savePatchIter_bag_hdf5, initialize_hdf5_bag, save_hdf5, screen_coords, isBlackPatch, isWhitePatch, to_percentiles #,coord_generator, sample_indices, 
 from wsi_core.util_classes import isInContourV1, isInContourV2, isInContourV3_Easy, isInContourV3_Hard, Contour_Checking_fn
 from utils.file_utils import load_pkl, save_pkl
+#import time
+#import xml.etree.ElementTree as ET
+#import pdb
+#import h5py
+#import itertools
 
 Image.MAX_IMAGE_PIXELS = 933120000
 
 class WholeSlideImage(object):
-    def __init__(self, path):
-
-        """
-        Args:
-            path (str): fullpath to WSI file
-        """
-
-#         self.name = ".".join(path.split("/")[-1].split('.')[:-1])
-        self.name = os.path.splitext(os.path.basename(path))[0]
-        self.wsi = openslide.open_slide(path)
+    def __init__(self, slide_path):
+        self.name = os.path.splitext(os.path.basename(slide_path))[0]
+        self.wsi = openslide.open_slide(slide_path)
         self.level_downsamples = self._assertLevelDownsamples()
         self.level_dim = self.wsi.level_dimensions
     
@@ -78,7 +71,6 @@ class WholeSlideImage(object):
 
     def initSegmentation(self, mask_file):
         # load segmentation results from pickle file
-        import pickle
         asset_dict = load_pkl(mask_file)
         self.holes_tissue = asset_dict['holes']
         self.contours_tissue = asset_dict['tissue']
@@ -88,8 +80,10 @@ class WholeSlideImage(object):
         asset_dict = {'holes': self.holes_tissue, 'tissue': self.contours_tissue}
         save_pkl(mask_file, asset_dict)
 
-    def segmentTissue(self, seg_level=0, sthresh=20, sthresh_up = 255, mthresh=7, close = 0, use_otsu=False, 
-                            filter_params={'a_t':100}, ref_patch_size=512, exclude_ids=[], keep_ids=[]):
+    def segmentTissue(
+        self, seg_level=0, sthresh=20, sthresh_up = 255, mthresh=7, close = 0, use_otsu=False, 
+        filter_params={'a_t':100}, ref_patch_size=512, exclude_ids=[], keep_ids=[]
+    ):
         """
             Segment the tissue via HSV -> Median thresholding -> Binary threshold
         """
@@ -121,11 +115,9 @@ class WholeSlideImage(object):
                     filtered.append(cont_idx)
                     all_holes.append(holes)
 
-
             foreground_contours = [contours[cont_idx] for cont_idx in filtered]
             
             hole_contours = []
-
             for hole_ids in all_holes:
                 unfiltered_holes = [contours[idx] for idx in hole_ids ]
                 unfilered_holes = sorted(unfiltered_holes, key=cv2.contourArea, reverse=True)
@@ -146,7 +138,6 @@ class WholeSlideImage(object):
         img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # Convert to HSV space
         img_med = cv2.medianBlur(img_hsv[:,:,1], mthresh)  # Apply median blurring
         
-       
         # Thresholding
         if use_otsu:
             _, img_otsu = cv2.threshold(img_med, 0, sthresh_up, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
@@ -181,9 +172,12 @@ class WholeSlideImage(object):
         self.contours_tissue = [self.contours_tissue[i] for i in contour_ids]
         self.holes_tissue = [self.holes_tissue[i] for i in contour_ids]
 
-    def visWSI(self, vis_level=0, color = (0,255,0), hole_color = (0,0,255), annot_color=(255,0,0), 
-                    line_thickness=250, max_size=None, top_left=None, bot_right=None, custom_downsample=1, view_slide_only=False,
-                    number_contours=False, seg_display=True, annot_display=True):
+    def visWSI(
+        self, vis_level=0, color = (0,255,0), hole_color = (0,0,255), annot_color=(255,0,0), 
+        line_thickness=250, max_size=None, top_left=None, bot_right=None,
+        custom_downsample=1, view_slide_only=False,
+        number_contours=False, seg_display=True, annot_display=True
+    ):
         
         downsample = self.level_downsamples[vis_level]
         scale = [1/downsample[0], 1/downsample[1]]
@@ -241,17 +235,12 @@ class WholeSlideImage(object):
 
     def createPatches_bag_hdf5(self, save_path, patch_level=0, patch_size=256, step_size=256, save_coord=True, **kwargs):
         contours = self.contours_tissue
-        contour_holes = self.holes_tissue
-
-        print("Creating patches for: ", self.name, "...",)
-        elapsed = time.time()
         for idx, cont in enumerate(contours):
             patch_gen = self._getPatchGenerator(cont, idx, patch_level, save_path, patch_size, step_size, **kwargs)
             
             if self.hdf5_file is None:
                 try:
                     first_patch = next(patch_gen)
-
                 # empty contour, continue
                 except StopIteration:
                     continue
@@ -268,9 +257,7 @@ class WholeSlideImage(object):
     def _getPatchGenerator(self, cont, cont_idx, patch_level, save_path, patch_size=256, step_size=256, custom_downsample=1,
         white_black=True, white_thresh=15, black_thresh=50, contour_fn='four_pt', use_padding=True):
         start_x, start_y, w, h = cv2.boundingRect(cont) if cont is not None else (0, 0, self.level_dim[patch_level][0], self.level_dim[patch_level][1])
-        print("Bounding Box:", start_x, start_y, w, h)
-        print("Contour Area:", cv2.contourArea(cont))
-        
+
         if custom_downsample > 1:
             assert custom_downsample == 2 
             target_patch_size = patch_size
@@ -311,11 +298,10 @@ class WholeSlideImage(object):
         count = 0
         for y in range(start_y, stop_y, step_size_y):
             for x in range(start_x, stop_x, step_size_x):
-
                 if not self.isInContours(cont_check_fn, (x,y), self.holes_tissue[cont_idx], ref_patch_size[0]): #point not inside contour and its associated holes
                     continue    
                 
-                count+=1
+                count += 1
                 patch_PIL = self.wsi.read_region((x,y), patch_level, (patch_size, patch_size)).convert('RGB')
                 if custom_downsample > 1:
                     patch_PIL = patch_PIL.resize((target_patch_size, target_patch_size))
@@ -338,7 +324,6 @@ class WholeSlideImage(object):
         for hole in holes:
             if cv2.pointPolygonTest(hole, (pt[0]+patch_size/2, pt[1]+patch_size/2), False) > 0:
                 return 1
-        
         return 0
 
     @staticmethod
@@ -370,10 +355,7 @@ class WholeSlideImage(object):
 
     def process_contours(self, save_path, patch_level=0, patch_size=256, step_size=256, **kwargs):
         save_path_hdf5 = os.path.join(save_path, str(self.name) + '.h5')
-        print("Creating patches for: ", self.name, "...",)
-        elapsed = time.time()
         n_contours = len(self.contours_tissue)
-        print("Total number of contours to process: ", n_contours)
         fp_chunk_size = math.ceil(n_contours * 0.05)
         init = True
         for idx, cont in enumerate(self.contours_tissue):
@@ -406,9 +388,6 @@ class WholeSlideImage(object):
             stop_y = min(start_y+h, img_h-ref_patch_size[1]+1)
             stop_x = min(start_x+w, img_w-ref_patch_size[0]+1)
         
-        print("Bounding Box:", start_x, start_y, w, h)
-        print("Contour Area:", cv2.contourArea(cont))
-
         if bot_right is not None:
             stop_y = min(bot_right[1], stop_y)
             stop_x = min(bot_right[0], stop_x)
@@ -458,20 +437,20 @@ class WholeSlideImage(object):
         pool.close()
         results = np.array([result for result in results if result is not None])
         
-        print('Extracted {} coordinates'.format(len(results)))
-
         if len(results)>0:
             asset_dict = {'coords' :          results}
             
-            attr = {'patch_size' :            patch_size, # To be considered...
-                    'patch_level' :           patch_level,
-                    'downsample':             self.level_downsamples[patch_level],
-                    'downsampled_level_dim' : tuple(np.array(self.level_dim[patch_level])),
-                    'level_dim':              self.level_dim[patch_level],
-                    'name':                   self.name,
-                    'save_path':              save_path}
+            attr = {
+                'patch_size' :            patch_size, # To be considered...
+                'patch_level' :           patch_level,
+                'downsample':             self.level_downsamples[patch_level],
+                'downsampled_level_dim' : tuple(np.array(self.level_dim[patch_level])),
+                'level_dim':              self.level_dim[patch_level],
+                'name':                   self.name,
+                'save_path':              save_path
+            }
 
-            attr_dict = { 'coords' : attr}
+            attr_dict = {'coords' : attr}
             return asset_dict, attr_dict
 
         else:
@@ -484,18 +463,16 @@ class WholeSlideImage(object):
         else:
             return None
 
-    def visHeatmap(self, scores, coords, vis_level=-1, 
-                   top_left=None, bot_right=None,
-                   patch_size=(256, 256), 
-                   blank_canvas=False, canvas_color=(220, 20, 50), alpha=0.4, 
-                   blur=False, overlap=0.0, 
-                   segment=True, use_holes=True,
-                   convert_to_percentiles=False, 
-                   binarize=False, thresh=0.5,
-                   max_size=None,
-                   custom_downsample = 1,
-                   cmap='coolwarm'):
-
+    def visHeatmap(
+        self, scores, coords, vis_level=-1, top_left=None, bot_right=None,
+        patch_size=(256, 256), blank_canvas=False, alpha=0.4, blur=False,
+        overlap=0.0, segment=True, use_holes=True,
+        convert_to_percentiles=False, 
+        binarize=False, thresh=0.5,
+        max_size=None,
+        custom_downsample = 1,
+        cmap='coolwarm'
+    ):
         """
         Args:
             scores (numpy array of float): Attention scores 
@@ -674,7 +651,6 @@ class WholeSlideImage(object):
        
         return img
 
-    
     def block_blending(self, img, vis_level, top_left, bot_right, alpha=0.5, blank_canvas=False, block_size=1024):
         print('\ncomputing blend')
         downsample = self.level_downsamples[vis_level]
@@ -687,7 +663,6 @@ class WholeSlideImage(object):
         shift = top_left # amount shifted w.r.t. (0,0)
         for x_start in range(top_left[0], bot_right[0], block_size_x * int(downsample[0])):
             for y_start in range(top_left[1], bot_right[1], block_size_y * int(downsample[1])):
-                #print(x_start, y_start)
 
                 # 1. convert wsi coordinates to image coordinates via shift and scale
                 x_start_img = int((x_start - shift[0]) / int(downsample[0]))
@@ -699,7 +674,6 @@ class WholeSlideImage(object):
 
                 if y_end_img == y_start_img or x_end_img == x_start_img:
                     continue
-                #print('start_coord: {} end_coord: {}'.format((x_start_img, y_start_img), (x_end_img, y_end_img)))
                 
                 # 3. fetch blend block and size
                 blend_block = img[y_start_img:y_end_img, x_start_img:x_end_img] 
