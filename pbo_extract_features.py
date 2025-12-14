@@ -55,19 +55,32 @@ class FeatureExtractor:
         total = len(bags_dataset)
 
         loader_kwargs = {'num_workers': 8, 'pin_memory': True} if device.type == "cuda" else {}
+        
+        #with open('slidelog.txt', "r") as f:
+        #    previously = [line.strip() for line in f]
 
         for bag_candidate_idx in tqdm(range(total)):
             slide_id = bags_dataset[bag_candidate_idx].split(self.slide_extension)[0]
+            #if slide_id in previously:
+            #    print(f"skipping")
+            #    continue
+
             bag_name = slide_id + '.h5'
+
+            with open('slidelog.txt', 'a') as file:
+                file.write(f"{slide_id}\n")
+            #print(slide_id)
+
             h5_file_path = os.path.join(self.dpath_patchset, bag_name)
             slide_file_path = os.path.join(self.dpath_mrxsRoot, slide_id+self.slide_extension)
-            print('\nprogress: {}/{}'.format(bag_candidate_idx, total))
+            #print('\nprogress: {}/{}'.format(bag_candidate_idx, total))
             print(slide_id)
 
             if not self.no_auto_skip and slide_id+'.pt' in dest_files:
                 print('skipped {}'.format(slide_id))
                 continue 
-
+            
+            print(slide_id)
             output_path = os.path.join(self.dpath_features_h5, bag_name)
             time_start = time.time()
             wsi = openslide.open_slide(slide_file_path)

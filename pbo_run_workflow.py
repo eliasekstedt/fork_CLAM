@@ -2,9 +2,9 @@
 from pbo_config import *
 
 do_generate_patches = False
-do_feature_extraction = True
-do_foldsplitting = False
-do_classifier_training = False
+do_feature_extraction = False
+do_foldsplitting = True
+do_classifier_training = True
 
 if do_generate_patches:
     from pbo_create_patchsets import PatchsetGenerator
