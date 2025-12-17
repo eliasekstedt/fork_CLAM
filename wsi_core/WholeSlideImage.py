@@ -89,6 +89,14 @@ class WholeSlideImage(object):
         """
         
         def _filter_contours(contours, hierarchy, filter_params):
+            fat = 0.2
+            fah = 0.01
+            mnh = 100
+            filter_params = {
+                'a_t':6300*fat,
+                'a_h':1008*fah,
+                'max_n_holes':8*mnh,
+            }
             """
                 Filter contours by: area.
             """
@@ -116,7 +124,7 @@ class WholeSlideImage(object):
                     all_holes.append(holes)
 
             foreground_contours = [contours[cont_idx] for cont_idx in filtered]
-            
+
             hole_contours = []
             for hole_ids in all_holes:
                 unfiltered_holes = [contours[idx] for idx in hole_ids ]
@@ -132,22 +140,19 @@ class WholeSlideImage(object):
 
                 hole_contours.append(filtered_holes)
 
+            print(len(foreground_contours), len(hole_contours))
             return foreground_contours, hole_contours
         
+        ###
         img = np.array(self.wsi.read_region((0,0), seg_level, self.level_dim[seg_level]))
         img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # Convert to HSV space
-        img_med = cv2.medianBlur(img_hsv[:,:,1], mthresh)  # Apply median blurring
-        
-        # Thresholding
-        if use_otsu:
-            _, img_otsu = cv2.threshold(img_med, 0, sthresh_up, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
-        else:
-            _, img_otsu = cv2.threshold(img_med, sthresh, sthresh_up, cv2.THRESH_BINARY)
+        img_med = cv2.medianBlur(img_hsv[:,:,1], 7)  # Apply median blurring
+        _, img_otsu = cv2.threshold(img_med, 0, 1, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
 
-        # Morphological closing
-        if close > 0:
-            kernel = np.ones((close, close), np.uint8)
-            img_otsu = cv2.morphologyEx(img_otsu, cv2.MORPH_CLOSE, kernel)                 
+        #result = np.where(np.stack([img_otsu]*img.shape[2], axis=2) == 1, img, 0)
+        #assem = np.concat([img, result], axis=1)
+        #Image.fromarray(assem).save('example0.png')
+        ###
 
         scale = self.level_downsamples[seg_level]
         scaled_ref_patch_area = int(ref_patch_size**2 / (scale[0] * scale[1]))
@@ -158,7 +163,8 @@ class WholeSlideImage(object):
         # Find and filter contours
         contours, hierarchy = cv2.findContours(img_otsu, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE) # Find contours 
         hierarchy = np.squeeze(hierarchy, axis=(0,))[:, 2:]
-        if filter_params: foreground_contours, hole_contours = _filter_contours(contours, hierarchy, filter_params)  # Necessary for filtering out artifacts
+        if filter_params:
+            foreground_contours, hole_contours = _filter_contours(contours, hierarchy, filter_params)  # Necessary for filtering out artifacts
 
         self.contours_tissue = self.scaleContourDim(foreground_contours, scale)
         self.holes_tissue = self.scaleHolesDim(hole_contours, scale)
@@ -173,12 +179,12 @@ class WholeSlideImage(object):
         self.holes_tissue = [self.holes_tissue[i] for i in contour_ids]
 
     def visWSI(
-        self, vis_level=0, color = (0,255,0), hole_color = (0,0,255), annot_color=(255,0,0), 
+        self, vis_level=0, color=(0,255,0), hole_color=(0,0,255), annot_color=(255,0,0), 
         line_thickness=250, max_size=None, top_left=None, bot_right=None,
         custom_downsample=1, view_slide_only=False,
         number_contours=False, seg_display=True, annot_display=True
     ):
-        
+
         downsample = self.level_downsamples[vis_level]
         scale = [1/downsample[0], 1/downsample[1]]
         
@@ -316,7 +322,6 @@ class WholeSlideImage(object):
 
                 yield patch_info
 
-        
         print("patches extracted: {}".format(count))
 
     @staticmethod
@@ -418,7 +423,6 @@ class WholeSlideImage(object):
             assert isinstance(contour_fn, Contour_Checking_fn)
             cont_check_fn = contour_fn
 
-        
         step_size_x = step_size * patch_downsample[0]
         step_size_y = step_size * patch_downsample[1]
 
@@ -713,3 +717,31 @@ class WholeSlideImage(object):
 
 
 
+        """
+        #########################
+        seg_level = 5
+        mthresh = 7
+        sthresh_up = 1
+        img = np.array(self.wsi.read_region((0,0), seg_level, self.level_dim[seg_level]))
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # Convert to HSV space
+        img_med = cv2.medianBlur(img_hsv[:,:,1], mthresh)  # Apply median blurring
+        _, img_otsu = cv2.threshold(img_med, 0, sthresh_up, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
+
+        print(
+            "seg_level: {}\nmthresh: {}\nsthresh_up: {}\nself.level_dim: {}\n".format(
+            seg_level, mthresh, sthresh_up, self.level_dim
+            )
+        )
+
+        result = np.where(np.stack([img_otsu]*img.shape[2], axis=2) == 1, img, 0)
+        assem = np.concat([img, result], axis=1)
+
+        Image.fromarray(assem).save('example.png')
+        raise SystemExit
+        #########################
+        """
+        """
+        if close > 0:
+            kernel = np.ones((close, close), np.uint8)
+            img_otsu = cv2.morphologyEx(img_otsu, cv2.MORPH_CLOSE, kernel)                 
+        """

@@ -60,7 +60,8 @@ class PatchsetGenerator:
 
 			idx = process_stack.index[i]
 			slide = process_stack.loc[idx, 'slide_id']
-			#print('processing {}'.format(slide))
+			if slide == '.DS_Store':
+				continue
 			
 			df.loc[idx, 'process'] = 0
 			slide_id, _ = os.path.splitext(slide)
@@ -126,8 +127,9 @@ class PatchsetGenerator:
 
 			WSI_object.segmentTissue(**current_seg_params, filter_params=current_filter_params)
 
-			mask = WSI_object.visWSI(**current_vis_params)
 
+			"""
+			mask = WSI_object.visWSI(**current_vis_params)
 			#mask_name = f"{slide_id}_{current_seg_params['seg_level']}_{current_seg_params['sthresh']}_{current_seg_params['mthresh']}_{current_seg_params['close']}_{int(current_seg_params['use_otsu'])}.jpg"
 			mask_name = f"{slide_id}.jpg"
 			mask_path = os.path.join(
@@ -135,7 +137,6 @@ class PatchsetGenerator:
 				mask_name,
 			)
 			mask.save(mask_path)
-			"""
 			"""
 
 			current_patch_params.update({
@@ -145,18 +146,12 @@ class PatchsetGenerator:
 				'save_path': self.dpath_patchset
 			})
 			file_path = WSI_object.process_contours(**current_patch_params)
-
 			file_path = os.path.join(self.dpath_patchset, slide_id+'.h5')
+			"""
 			if os.path.isfile(file_path):
 				heatmap = StitchCoords(file_path, WSI_object, downscale=64, bg_color=(0,0,0), alpha=-1, draw_grid=False)
-				#stitch_path = os.path.join(self.dpath_patchset_stitch, slide_id+'.jpg')
-				#heatmap.save(stitch_path)
-				
-				heatmap.save(os.path.join(
-					self.dpath_patchset_stitch,
-					'current.jpg'
-				))
-			
+				stitch_path = os.path.join(self.dpath_patchset_stitch, slide_id+'.jpg')
+				heatmap.save(stitch_path)
 			"""
 			##########################
 			if os.path.isfile(file_path):
@@ -170,7 +165,6 @@ class PatchsetGenerator:
 				fpath_assem = os.path.join(dpath_assem, assem_name)
 				assem.save(fpath_assem)
 			##########################
-			"""
 
 			df.loc[idx, 'status'] = 'processed'
 

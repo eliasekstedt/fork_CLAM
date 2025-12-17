@@ -13,7 +13,7 @@ cfg = SimpleNamespace()
 cfg.dpath_csvRoot = 'csv/'
 cfg.dpath_dataRoot = 'data/'
 
-cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/' #.mrxs WSI
+cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/' #'../CLAM/data0_mrxs/'
 
 cfg.dpath_patchRoot = os.path.join(cfg.dpath_dataRoot, 'data1_expatch/') #.h5
 cfg.dpath_patchset = os.path.join(cfg.dpath_patchRoot, 'patches')
@@ -50,10 +50,10 @@ cfg.fpath_map_fold_0 = os.path.join(cfg.dpath_milFolds, 'map_fold_0.csv')
 cfg.fpath_map_fold_1 = os.path.join(cfg.dpath_milFolds, 'map_fold_1.csv')
 
 # patch extraction
-cfg.param_sthresh = 2 # 2
-cfg.param_mthresh = 5 # 5
-cfg.param_close = 8 # 8
-cfg.param_otsu = False # False
+cfg.param_sthresh = 4 # fat
+cfg.param_mthresh = 1 # fah
+cfg.param_close = 100 # mnh
+cfg.param_otsu = 2 # False
 ## most inclusive so far:
 # 1,3,1,False | too inclusive
 ## best overall: 2,3,2,False
