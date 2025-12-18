@@ -15,10 +15,11 @@ if __name__ == '__main__':
             dpath_patchset=cfg.dpath_patchset,
             dpath_patchset_masks=cfg.dpath_patchset_masks,
             dpath_patchset_stitch=cfg.dpath_patchset_stitch,
-            param_sthresh=cfg.param_sthresh,
-            param_mthresh=cfg.param_mthresh,
-            param_close=cfg.param_close,
-            param_otsu=cfg.param_otsu,
+            mthresh=cfg.mthresh,
+            close=cfg.close,
+            a_t=cfg.a_t,
+            a_h=cfg.a_h,
+            max_holes=cfg.max_holes,
         )
         patchset_generator()
 

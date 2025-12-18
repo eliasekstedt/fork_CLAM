@@ -49,14 +49,14 @@ cfg.fpath_map_patchset = os.path.join(cfg.dpath_csvRoot, 'map_patchset.csv')
 cfg.fpath_map_fold_0 = os.path.join(cfg.dpath_milFolds, 'map_fold_0.csv')
 cfg.fpath_map_fold_1 = os.path.join(cfg.dpath_milFolds, 'map_fold_1.csv')
 
-# patch extraction
-cfg.param_sthresh = 4 # fat
-cfg.param_mthresh = 1 # fah
-cfg.param_close = 100 # mnh
-cfg.param_otsu = 2 # False
-## most inclusive so far:
-# 1,3,1,False | too inclusive
-## best overall: 2,3,2,False
+cfg.mthresh = 7
+cfg.close = 8
+
+cfg.a_t = 1260
+cfg.a_h = 10
+cfg.max_holes = 800
+
+
 
 # feauture extraction
 cfg.fpath_fexmodel = os.path.join(cfg.dpath_dataRoot, 'pbo_fexmodel.ckpt')

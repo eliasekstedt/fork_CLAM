@@ -81,22 +81,13 @@ class WholeSlideImage(object):
         save_pkl(mask_file, asset_dict)
 
     def segmentTissue(
-        self, seg_level=0, sthresh=20, sthresh_up = 255, mthresh=7, close = 0, use_otsu=False, 
-        filter_params={'a_t':100}, ref_patch_size=512, exclude_ids=[], keep_ids=[]
+        self, seg_level, mthresh, close, a_t, a_h, max_holes, ref_patch_size=512,
     ):
         """
             Segment the tissue via HSV -> Median thresholding -> Binary threshold
         """
         
-        def _filter_contours(contours, hierarchy, filter_params):
-            fat = 0.2
-            fah = 0.01
-            mnh = 100
-            filter_params = {
-                'a_t':6300*fat,
-                'a_h':1008*fah,
-                'max_n_holes':8*mnh,
-            }
+        def _filter_contours(contours, hierarchy, a_t, a_h, max_holes):
             """
                 Filter contours by: area.
             """
@@ -119,7 +110,7 @@ class WholeSlideImage(object):
                 # actual area of foreground contour region
                 a = a - np.array(hole_areas).sum()
                 if a == 0: continue
-                if tuple((filter_params['a_t'],)) < tuple((a,)): 
+                if tuple((a_t,)) < tuple((a,)): 
                     filtered.append(cont_idx)
                     all_holes.append(holes)
 
@@ -130,12 +121,12 @@ class WholeSlideImage(object):
                 unfiltered_holes = [contours[idx] for idx in hole_ids ]
                 unfilered_holes = sorted(unfiltered_holes, key=cv2.contourArea, reverse=True)
                 # take max_n_holes largest holes by area
-                unfilered_holes = unfilered_holes[:filter_params['max_n_holes']]
+                unfilered_holes = unfilered_holes[:max_holes]
                 filtered_holes = []
                 
                 # filter these holes
                 for hole in unfilered_holes:
-                    if cv2.contourArea(hole) > filter_params['a_h']:
+                    if cv2.contourArea(hole) > a_h:
                         filtered_holes.append(hole)
 
                 hole_contours.append(filtered_holes)
@@ -143,38 +134,42 @@ class WholeSlideImage(object):
             print(len(foreground_contours), len(hole_contours))
             return foreground_contours, hole_contours
         
-        ###
         img = np.array(self.wsi.read_region((0,0), seg_level, self.level_dim[seg_level]))
         img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # Convert to HSV space
-        img_med = cv2.medianBlur(img_hsv[:,:,1], 7)  # Apply median blurring
+        img_med = cv2.medianBlur(img_hsv[:,:,1], mthresh)  # Apply median blurring
         _, img_otsu = cv2.threshold(img_med, 0, 1, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
 
-        #result = np.where(np.stack([img_otsu]*img.shape[2], axis=2) == 1, img, 0)
-        #assem = np.concat([img, result], axis=1)
-        #Image.fromarray(assem).save('example0.png')
-        ###
+        kernel = np.ones((close, close), np.uint8)
+        img_otsu = cv2.morphologyEx(img_otsu, cv2.MORPH_CLOSE, kernel) 
 
         scale = self.level_downsamples[seg_level]
+        """
         scaled_ref_patch_area = int(ref_patch_size**2 / (scale[0] * scale[1]))
+        a_t = a_t * scaled_ref_patch_area
+        a_h = a_h * scaled_ref_patch_area
         filter_params = filter_params.copy()
         filter_params['a_t'] = filter_params['a_t'] * scaled_ref_patch_area
         filter_params['a_h'] = filter_params['a_h'] * scaled_ref_patch_area
+        """
         
         # Find and filter contours
         contours, hierarchy = cv2.findContours(img_otsu, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE) # Find contours 
         hierarchy = np.squeeze(hierarchy, axis=(0,))[:, 2:]
-        if filter_params:
-            foreground_contours, hole_contours = _filter_contours(contours, hierarchy, filter_params)  # Necessary for filtering out artifacts
+
+        foreground_contours, hole_contours = _filter_contours(contours, hierarchy, a_t, a_h, max_holes)  # Necessary for filtering out artifacts
 
         self.contours_tissue = self.scaleContourDim(foreground_contours, scale)
         self.holes_tissue = self.scaleHolesDim(hole_contours, scale)
 
+        """
         #exclude_ids = [0,7,9]
         if len(keep_ids) > 0:
             contour_ids = set(keep_ids) - set(exclude_ids)
         else:
             contour_ids = set(np.arange(len(self.contours_tissue))) - set(exclude_ids)
+        """
 
+        contour_ids = set(np.arange(len(self.contours_tissue)))# - set([])
         self.contours_tissue = [self.contours_tissue[i] for i in contour_ids]
         self.holes_tissue = [self.holes_tissue[i] for i in contour_ids]
 
@@ -358,7 +353,7 @@ class WholeSlideImage(object):
         
         return level_downsamples
 
-    def process_contours(self, save_path, patch_level=0, patch_size=256, step_size=256, **kwargs):
+    def process_contours(self, save_path, patch_level, patch_size, step_size):
         save_path_hdf5 = os.path.join(save_path, str(self.name) + '.h5')
         n_contours = len(self.contours_tissue)
         fp_chunk_size = math.ceil(n_contours * 0.05)
@@ -367,7 +362,7 @@ class WholeSlideImage(object):
             if (idx + 1) % fp_chunk_size == fp_chunk_size:
                 print('Processing contour {}/{}'.format(idx, n_contours))
             
-            asset_dict, attr_dict = self.process_contour(cont, self.holes_tissue[idx], patch_level, save_path, patch_size, step_size, **kwargs)
+            asset_dict, attr_dict = self.process_contour(cont, self.holes_tissue[idx], patch_level, save_path, patch_size, step_size)
             if len(asset_dict) > 0:
                 if init:
                     save_hdf5(save_path_hdf5, asset_dict, attr_dict, mode='w')
@@ -378,8 +373,8 @@ class WholeSlideImage(object):
         return self.hdf5_file
 
 
-    def process_contour(self, cont, contour_holes, patch_level, save_path, patch_size = 256, step_size = 256,
-        contour_fn='four_pt', use_padding=True, top_left=None, bot_right=None):
+    def process_contour(self, cont, contour_holes, patch_level, save_path, patch_size, step_size):
+        contour_fn, use_padding, top_left, bot_right = 'four_pt', True, None, None
         start_x, start_y, w, h = cv2.boundingRect(cont) if cont is not None else (0, 0, self.level_dim[patch_level][0], self.level_dim[patch_level][1])
 
         patch_downsample = (int(self.level_downsamples[patch_level][0]), int(self.level_downsamples[patch_level][1]))
