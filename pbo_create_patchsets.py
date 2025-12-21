@@ -26,33 +26,20 @@ class PatchsetGenerator:
 		self.dpath_patchset = dpath_patchset
 		self.dpath_patchset_masks = dpath_patchset_masks
 		self.dpath_patchset_stitch = dpath_patchset_stitch
-
+		#seg params
 		self.mthresh = mthresh
 		self.close = close
-
-		#self.filter_params = {'a_t':100, 'a_h':16, 'max_n_holes':8}
+		# filter params
 		self.a_t = a_t
 		self.a_h = a_h
 		self.max_holes = max_holes
-
-		self.vis_params = {'vis_level':-1, 'line_thickness':250}
-
 		#patch params
 		self.patch_size = 256
 		self.step_size = 256
 		self.patch_level = 0
 
-	
-		"""
-		self.patch_params = {
-			'use_padding':True,
-			'contour_fn':'four_pt',
-			'patch_level': self.patch_level,
-			'patch_size': self.patch_size,
-			'step_size': self.step_size, 
-			'save_path': self.dpath_patchset,
-		}
-		"""
+		self.vis_params = {'vis_level':-1, 'line_thickness':250}
+
 	
 	def __call__(self):
 		slides = sorted(os.listdir(self.dpath_mrxs))
@@ -61,16 +48,13 @@ class PatchsetGenerator:
 			if os.path.isfile(os.path.join(self.dpath_mrxs, slide))
 			and not slide == '.DS_Store'
 		]
-		live = False
+		live = True
 		for slide_id in slide_ids:
-
 			# Inialize WSI
 			slide_path = os.path.join(self.dpath_mrxs, slide_id)
 			WSI_object = WholeSlideImage(slide_path)
 			best_downsample_lvl = WSI_object.wsi.get_best_level_for_downsample(64)
 			self.vis_params['vis_level'] = best_downsample_lvl
-
-
 
 			w, h = WSI_object.level_dim[best_downsample_lvl] 
 			assert w * h < 1e8
@@ -104,13 +88,13 @@ class PatchsetGenerator:
 			if os.path.isfile(file_path):
 				if live:
 					heatmap = StitchCoords(file_path, WSI_object, downscale=64, bg_color=(0,0,0), alpha=-1, draw_grid=False)
-					stitch_path = os.path.join(self.dpath_patchset_stitch, slide_id+'.jpg')
+					stitch_path = os.path.join(self.dpath_patchset_stitch, slide_id.rstrip('.mrxs')+'.jpg')
 					heatmap.save(stitch_path)
 				else:
 					mask = np.array(WSI_object.visWSI(**self.vis_params))
 					heatmap = np.array(StitchCoords(file_path, WSI_object, downscale=64, bg_color=(0,0,0), alpha=-1, draw_grid=False))
 					assem = Image.fromarray(np.concatenate([mask, heatmap], axis=1))
-					dpath_assem = f"../diagnostics/regutted0"
+					dpath_assem = f"../diagnostics/regutted1"
 					if not os.path.isdir(dpath_assem):
 						os.makedirs(dpath_assem)
 					assem_name = f"{slide_id.rstrip('.mrsx')}.jpg"

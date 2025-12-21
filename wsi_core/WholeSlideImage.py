@@ -91,13 +91,13 @@ class WholeSlideImage(object):
             """
                 Filter contours by: area.
             """
-            filtered = []
 
             # find indices of foreground contours (parent == -1)
             hierarchy_1 = np.flatnonzero(hierarchy[:,1] == -1)
             all_holes = []
             
             # loop through foreground contour indices
+            filtered = []
             for cont_idx in hierarchy_1:
                 # actual contour
                 cont = contours[cont_idx]
@@ -143,14 +143,6 @@ class WholeSlideImage(object):
         img_otsu = cv2.morphologyEx(img_otsu, cv2.MORPH_CLOSE, kernel) 
 
         scale = self.level_downsamples[seg_level]
-        """
-        scaled_ref_patch_area = int(ref_patch_size**2 / (scale[0] * scale[1]))
-        a_t = a_t * scaled_ref_patch_area
-        a_h = a_h * scaled_ref_patch_area
-        filter_params = filter_params.copy()
-        filter_params['a_t'] = filter_params['a_t'] * scaled_ref_patch_area
-        filter_params['a_h'] = filter_params['a_h'] * scaled_ref_patch_area
-        """
         
         # Find and filter contours
         contours, hierarchy = cv2.findContours(img_otsu, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE) # Find contours 
@@ -160,14 +152,6 @@ class WholeSlideImage(object):
 
         self.contours_tissue = self.scaleContourDim(foreground_contours, scale)
         self.holes_tissue = self.scaleHolesDim(hole_contours, scale)
-
-        """
-        #exclude_ids = [0,7,9]
-        if len(keep_ids) > 0:
-            contour_ids = set(keep_ids) - set(exclude_ids)
-        else:
-            contour_ids = set(np.arange(len(self.contours_tissue))) - set(exclude_ids)
-        """
 
         contour_ids = set(np.arange(len(self.contours_tissue)))# - set([])
         self.contours_tissue = [self.contours_tissue[i] for i in contour_ids]

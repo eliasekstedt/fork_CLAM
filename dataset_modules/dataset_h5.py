@@ -89,7 +89,6 @@ class Whole_Slide_Bag_FP(Dataset):
 		return {'img': img, 'coord': coord}
 
 class Dataset_All_Bags(Dataset):
-
 	def __init__(self, csv_path):
 		self.df = pd.read_csv(csv_path)
 	
