@@ -40,7 +40,7 @@ if __name__ == '__main__':
             dpath_features_pt=cfg.dpath_features_pt,
             dpath_features_h5=cfg.dpath_features_h5,
             fpath_map_patchset=cfg.fpath_map_patchset,
-            fpath_model=cfg.fpath_fexmodel,
+            fpath_model=cfg.fpath_Xmodel,
             batch_size=cfg.fexparam_batch_size,
             patch_size=cfg.fexparam_patch_size,
             slide_extension=cfg.fexparam_slide_extension,

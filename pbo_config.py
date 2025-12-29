@@ -58,7 +58,7 @@ cfg.max_holes = 800
 
 
 # feauture extraction
-cfg.fpath_fexmodel = os.path.join(cfg.dpath_dataRoot, 'pbo_fexmodel.ckpt')
+cfg.fpath_Xmodel = os.path.join(cfg.dpath_dataRoot, 'Xmodel.ckpt')
 
 cfg.fexparam_batch_size=512
 cfg.fexparam_patch_size=224
