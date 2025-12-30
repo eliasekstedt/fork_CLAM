@@ -2,6 +2,7 @@
 __pycache__/
 notebooks
 data/
+data_using_normalization/
 pbo_model/
 splits/
 run/

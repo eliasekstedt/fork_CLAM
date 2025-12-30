@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from torch.utils.data import Dataset
-from torchvision import transforms
+from torchvision.transforms import ToTensor
 
 from PIL import Image
 import h5py
@@ -53,7 +53,7 @@ class Whole_Slide_Bag_FP(Dataset):
 			img_transforms (callable, optional): Optional transform to be applied on a sample
 		"""
 		self.wsi = wsi
-		self.roi_transforms = img_transforms
+		self.roi_transforms = ToTensor()#img_transforms
 
 		self.file_path = file_path
 
@@ -82,9 +82,9 @@ class Whole_Slide_Bag_FP(Dataset):
 			coord = hdf5_file['coords'][idx]
 		img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
 
-		cshow(img)
 		img = self.roi_transforms(img)
-		raise SystemExit
+		#cshow(img)
+		#raise SystemExit
 		return {'img': img, 'coord': coord}
 
 class Dataset_All_Bags(Dataset):
@@ -101,5 +101,8 @@ class Dataset_All_Bags(Dataset):
 
 
 def cshow(tensor):
-	savepath = f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png'
-	tensor.save(savepath)
+	import matplotlib.pyplot as plt
+	plt.imshow(np.transpose(tensor.detach().numpy(), (1, 2, 0)))
+	plt.savefig(f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png')
+	#savepath = f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png'
+	#tensor.save(savepath)
