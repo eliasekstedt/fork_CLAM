@@ -4,7 +4,7 @@ import pandas as pd
 from torch.utils.data import Dataset
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+#import torch.nn.functional as F
 
 from datetime import datetime
 
@@ -52,10 +52,11 @@ class MILReader(Dataset):
 
 
 class MILTrainer:
-    def __init__(self, model, lr, weight_decay, device):
-        self.criterion = nn.CrossEntropyLoss().to(device)
+    def __init__(self, model, lr, lf_weights, weight_decay, device):
+        self.criterion = nn.CrossEntropyLoss(weight=lf_weights).to(device)
         self.traincost, self.valcost = [], []
         self.trainperformance, self.valperformance = [], []
+        self.train_pred_balance = []
         self.current_best = None
         self.model = model
         self.optimizer = torch.optim.Adam(
@@ -73,12 +74,14 @@ class MILTrainer:
     def train_epoch(self, trainloader, device):
         self.model.train()
         cost, performance = 0, 0
-        #delme_pl_pair = []
+        ratio_0, ratio_1 = 0, 0
+
         for features, labels in trainloader:
             features, labels = features.squeeze(0).to(device), labels.to(device)
             logits, _, Y_hat, results_dict = self.model(features, labels, True)
-
-            #delme_pl_pair.append((logits.argmax(1).item(), labels.item()))
+        
+            ratio_0 += logits.argmax(1).item() / len(trainloader)
+            ratio_1 += labels.item() / len(trainloader)
 
             raw_loss = self.criterion(logits, labels)
             loss = 0.7 * raw_loss + (1 - 0.7) * results_dict['instance_loss']
@@ -87,11 +90,8 @@ class MILTrainer:
             self.optimizer.step()
             cost += loss.item() / len(trainloader)
             performance += self.get_nr_accurate(logits, labels) / len(trainloader.dataset)
-        """[print(pair) for pair in delme_pl_pair]
-        print(sum([pair[0] for pair in delme_pl_pair]))
-        print(sum([pair[1] for pair in delme_pl_pair]))
-        print(len(delme_pl_pair))
-        raise SystemExit"""
+        
+        self.train_pred_balance += [ratio_0 / ratio_1]
         self.traincost += [cost]
         self.trainperformance += [performance]
 
@@ -113,7 +113,7 @@ class MILTrainer:
         self.valperformance += [performance]
 
     def log_epoch(self, header, runpath, nr_epochs):
-        epoch_info = f'{len(self.valcost)}/{nr_epochs}\t{round(self.traincost[-1], 4)}/{round(self.valcost[-1], 4)}\t{round(self.trainperformance[-1], 4)}/{round(self.valperformance[-1], 4)}\t{str(datetime.now())[11:19]}'
+        epoch_info = f'{len(self.valcost)}/{nr_epochs}\t{round(self.traincost[-1], 4)}/{round(self.valcost[-1], 4)}\t{round(self.trainperformance[-1], 4)}/{round(self.valperformance[-1], 4)}\t{self.train_pred_balance[-1]}\t{str(datetime.now())[11:19]}'
         if self.current_best is None or self.current_best >= self.valcost[-1]: # early stopping protocol
             self.current_best = self.valcost[-1]
             path_model = f"{runpath}model.pth"
@@ -128,9 +128,9 @@ class MILTrainer:
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
-        header = f'epoch\tloss\t\taccuracy\ttime'
+        header = f'epoch\tloss\t\taccuracy\tbalns\ttime'
         print(header)
-        for i in range(1, nr_epochs+1):
+        for _ in range(1, nr_epochs+1):
             self.train_epoch(trainloader, device)
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
@@ -143,7 +143,8 @@ def record_history(path_model):
 
 class MilTrainWrapper:
     def __init__(self, dpath_features_pt, fpath_map_fold_0,
-        fpath_map_fold_1, hparam, fpath_state_dict, augm, tag, device):
+        fpath_map_fold_1, hparam, fpath_state_dict, augm, tag, device
+    ):
 
         loader_0, loader_1 = self.init_loaders(
             dpath_features_pt=dpath_features_pt,
@@ -151,6 +152,20 @@ class MilTrainWrapper:
             fpath_map_fold_1=fpath_map_fold_1,
             batch_size=hparam['batch_size'],
         )
+
+        # class rebalance
+        print(loader_0.dataset.map)
+        counts = torch.tensor(
+            loader_0.dataset.map['label'].value_counts(),
+            dtype=torch.float
+        )
+
+        lf_weights = 1.0 / counts
+        #print(lf_weights)
+        #print(lf_weights.sum())
+        lf_weights = lf_weights / lf_weights.sum()
+        print(lf_weights)
+        
         
         runpath = self.init_run(hparam, augm, tag, device)
         model = self.init_model(runpath, fpath_state_dict, hparam['dropout'], device)
@@ -161,6 +176,7 @@ class MilTrainWrapper:
             model=model,
             nr_epochs=hparam['nr_epochs'],
             lr=hparam['learning_rate'],
+            lf_weights=lf_weights,
             weight_decay=hparam['weight_decay'],
             device=device,
         )
@@ -216,9 +232,9 @@ class MilTrainWrapper:
         return model.to(device)
     
     def learn_parameters(self, runpath, loader_0, loader_1, model,
-        nr_epochs, lr, weight_decay, device):
+        nr_epochs, lr, lf_weights, weight_decay, device):
         print('init training ...')
-        trainer = MILTrainer(model, lr, weight_decay, device)
+        trainer = MILTrainer(model, lr, lf_weights, weight_decay, device)
         trainer.execute_train_protocol(
             trainloader=loader_0,
             valloader=loader_1,

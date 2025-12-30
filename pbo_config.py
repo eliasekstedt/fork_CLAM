@@ -13,7 +13,8 @@ cfg = SimpleNamespace()
 cfg.dpath_csvRoot = 'csv/'
 cfg.dpath_dataRoot = 'data/'
 
-cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/' #'../CLAM/data0_mrxs/'
+#cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/'
+cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/'
 
 cfg.dpath_patchRoot = os.path.join(cfg.dpath_dataRoot, 'data1_expatch/') #.h5
 cfg.dpath_patchset = os.path.join(cfg.dpath_patchRoot, 'patches')
@@ -21,9 +22,10 @@ cfg.dpath_patchset_masks = os.path.join(cfg.dpath_patchRoot, 'masks')
 cfg.dpath_patchset_stitch = os.path.join(cfg.dpath_patchRoot, 'stitches')
 
 cfg.dpath_featuresRoot = os.path.join(cfg.dpath_dataRoot, 'data2_features/') #.h5 + .pt
+###
 cfg.dpath_features_pt = os.path.join(cfg.dpath_featuresRoot, 'pt_files/')
-#cfg.dpath_features_pt = '../prosBiOps_extra/synDataGen/synPt_r20/'
-
+#cfg.dpath_features_pt = '../prosBiOps_extra/synDataGen/synPt_rUnknown/'
+###
 cfg.dpath_features_h5 = os.path.join(cfg.dpath_featuresRoot, 'h5_files/')
 
 cfg.dpath_classifierRoot = os.path.join(cfg.dpath_dataRoot, 'data3_classifier')
@@ -65,7 +67,7 @@ cfg.fexparam_patch_size=224
 cfg.fexparam_slide_extension='.mrxs'
 cfg.fexparam_no_auto_skip=False
 
-cfg.tag = 'synData_r20'
+cfg.tag = 'real2026'
 cfg.hparam = {
     'dropout': 0.0,
     'batch_size':1,

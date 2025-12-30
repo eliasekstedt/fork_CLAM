@@ -70,7 +70,7 @@ class PatchsetGenerator:
 
 			if live:
 				mask = WSI_object.visWSI(**self.vis_params)
-				mask_name = f"{slide_id}.jpg"
+				mask_name = f"{slide_id.rstrip('.mrsx')}.jpg"
 				mask_path = os.path.join(
 					self.dpath_patchset_masks,
 					mask_name,

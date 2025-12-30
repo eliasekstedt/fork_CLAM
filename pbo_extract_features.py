@@ -76,9 +76,11 @@ class FeatureExtractor:
             #print('\nprogress: {}/{}'.format(bag_candidate_idx, total))
             print(slide_id)
 
+            """
             if not self.no_auto_skip and slide_id+'.pt' in dest_files:
                 print('skipped {}'.format(slide_id))
                 continue 
+            """
             
             print(slide_id)
             output_path = os.path.join(self.dpath_features_h5, bag_name)
@@ -103,6 +105,8 @@ class FeatureExtractor:
 
             features = torch.from_numpy(features)
             bag_base, _ = os.path.splitext(bag_name)
+            print('emergency break 1')
+            raise SystemExit
             torch.save(features, os.path.join(self.dpath_features_pt, bag_base+'.pt'))
     
     def get_pbo_encoder(self, fpath_model):
@@ -151,6 +155,8 @@ class FeatureExtractor:
                 features = features.cpu().numpy().astype(np.float32)
 
                 asset_dict = {'features': features, 'coords': coords}
+                print('emergency break 0')
+                raise SystemExit
                 save_hdf5(output_path, asset_dict, attr_dict= None, mode=mode)
                 mode = 'a'
         

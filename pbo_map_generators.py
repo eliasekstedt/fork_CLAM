@@ -51,6 +51,8 @@ class ClassifierMapGenerator:
         map_fold_0, map_fold_1 = self.split_2fold(map_classifier)
         map_fold_0.to_csv(fpath_map_fold_0, index=False)
         map_fold_1.to_csv(fpath_map_fold_1, index=False)
+        fold_0_label_0_ratio = 1 - (map_fold_0['label'].sum() / map_fold_0.shape[0])
+        print(f"label 0 ratio: {fold_0_label_0_ratio}")
 
     def get_case_id(self, patchset_id):
         return re.match(r"(patient_[^_]+)", patchset_id).group(1)

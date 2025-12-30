@@ -46,10 +46,7 @@ class Whole_Slide_Bag(Dataset):
 		return {'img': img, 'coord': coord}
 
 class Whole_Slide_Bag_FP(Dataset):
-	def __init__(self,
-		file_path,
-		wsi,
-		img_transforms=None):
+	def __init__(self, file_path, wsi, img_transforms=None):
 		"""
 		Args:
 			file_path (string): Path to the .h5 file containing patched data.
@@ -85,7 +82,9 @@ class Whole_Slide_Bag_FP(Dataset):
 			coord = hdf5_file['coords'][idx]
 		img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
 
+		cshow(img)
 		img = self.roi_transforms(img)
+		raise SystemExit
 		return {'img': img, 'coord': coord}
 
 class Dataset_All_Bags(Dataset):
@@ -101,3 +100,6 @@ class Dataset_All_Bags(Dataset):
 
 
 
+def cshow(tensor):
+	savepath = f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png'
+	tensor.save(savepath)

@@ -131,7 +131,6 @@ class WholeSlideImage(object):
 
                 hole_contours.append(filtered_holes)
 
-            print(len(foreground_contours), len(hole_contours))
             return foreground_contours, hole_contours
         
         img = np.array(self.wsi.read_region((0,0), seg_level, self.level_dim[seg_level]))

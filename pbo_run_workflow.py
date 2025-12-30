@@ -2,7 +2,7 @@
 from pbo_config import *
 
 do_generate_patches = False
-do_feature_extraction = True
+do_feature_extraction = True # normalization params?
 do_foldsplitting = False
 do_classifier_training = False
 
