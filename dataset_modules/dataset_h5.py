@@ -46,14 +46,14 @@ class Whole_Slide_Bag(Dataset):
 		return {'img': img, 'coord': coord}
 
 class Whole_Slide_Bag_FP(Dataset):
-	def __init__(self, file_path, wsi, img_transforms=None):
+	def __init__(self, file_path, wsi, img_transforms):
 		"""
 		Args:
 			file_path (string): Path to the .h5 file containing patched data.
 			img_transforms (callable, optional): Optional transform to be applied on a sample
 		"""
 		self.wsi = wsi
-		self.roi_transforms = ToTensor()#img_transforms
+		self.roi_transforms = img_transforms
 
 		self.file_path = file_path
 

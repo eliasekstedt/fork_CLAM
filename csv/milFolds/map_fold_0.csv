@@ -1,9 +1,9 @@
 case_id,slide_id,label
+patient_210,patient_210_GHK,0
 patient_098,patient_098_GHK,1
-patient_099,patient_099_GHK,0
+patient_105,patient_105_GHK,1
+patient_145,patient_145_GHK,0
+patient_213,patient_213_GHK,0
 patient_004,patient_004_GHK,1
-patient_064,patient_064_GHK,1
+patient_137,patient_137_GHK,1
 patient_119,patient_119_GHK,1
-patient_008,patient_008_GHK,1
-patient_176,patient_176_GHK,1
-patient_070,patient_070_GHK,0

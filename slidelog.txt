@@ -1624,3 +1624,8 @@ patient_176_GHK
 patient_203_GHK
 patient_210_GHK
 patient_213_GHK
+patient_004_GHK
+patient_008_GHK
+patient_049_GHK
+patient_064_GHK
+patient_070_GHK

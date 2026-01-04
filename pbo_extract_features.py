@@ -56,34 +56,18 @@ class FeatureExtractor:
         total = len(bags_dataset)
 
         loader_kwargs = {'num_workers': 0, 'pin_memory': True} if device.type == "cuda" else {}
-        
-        #with open('slidelog.txt', "r") as f:
-        #    previously = [line.strip() for line in f]
 
         for bag_candidate_idx in tqdm(range(total)):
             slide_id = bags_dataset[bag_candidate_idx].split(self.slide_extension)[0]
-            #if slide_id in previously:
-            #    print(f"skipping")
-            #    continue
-
             bag_name = slide_id + '.h5'
-
-            with open('slidelog.txt', 'a') as file:
-                file.write(f"{slide_id}\n")
-            #print(slide_id)
 
             h5_file_path = os.path.join(self.dpath_patchset, bag_name)
             slide_file_path = os.path.join(self.dpath_mrxsRoot, slide_id+self.slide_extension)
-            #print('\nprogress: {}/{}'.format(bag_candidate_idx, total))
-            print(slide_id)
 
-            """
-            """
             if not self.no_auto_skip and slide_id + '.pt' in dest_files:
                 print('skipped {}'.format(slide_id))
                 continue 
-            
-            #print(slide_id)
+
             output_path = os.path.join(self.dpath_features_h5, bag_name)
             time_start = time.time()
             wsi = openslide.open_slide(slide_file_path)
@@ -109,28 +93,20 @@ class FeatureExtractor:
             torch.save(features, os.path.join(self.dpath_features_pt, bag_base+'.pt'))
     
     def get_pbo_encoder(self, fpath_model):
-        """
-        this function is code modified from:
-        https://github.com/ozanciga/self-supervised-histopathology?tab=readme-ov-file
-        the .ckpt file can also be downloaded from there.
-        """
-        def load_model_weights(model, weights):
-            model_dict = model.state_dict()
-            weights = {k: v for k, v in weights.items() if k in model_dict}
-            if weights == {}:
-                print('No weight could be loaded..')
-            model_dict.update(weights)
-            model.load_state_dict(model_dict)
-            return model
+        def process_state_dict(state_dict):
+            for k in list(state_dict.keys()):
+                state_dict[k.replace("model.", "").replace("resnet.", "")] = state_dict.pop(k)
+            state_dict = {
+                k: v for k, v in state_dict.items()
+                if not k.startswith("fc.")
+            }
+            return state_dict
 
-        model = torchvision.models.__dict__['resnet18'](weights=None)
+        model = torchvision.models.resnet18(weights=None)
+        model.fc = torch.nn.Identity()
         state = torch.load(fpath_model, map_location='cuda:0', weights_only=False)
-        state_dict = state['state_dict']
-        for key in list(state_dict.keys()):
-            state_dict[key.replace('model.', '').replace('resnet.', '')] = state_dict.pop(key)
-        model = load_model_weights(model, state_dict)
-        model.fc = torch.nn.Sequential()
-        #model = model.cuda()
+        state_dict = process_state_dict(state["state_dict"])
+        model.load_state_dict(state_dict, strict=True)
         return model
 
     def compute_w_loader(self, device, output_path, loader, model):
