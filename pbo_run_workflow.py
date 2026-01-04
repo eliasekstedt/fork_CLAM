@@ -1,9 +1,9 @@
 
-from pbo_config import *
+from pbo_lt_config import *
 
 do_generate_patches = False
-do_feature_extraction = True # normalization params?
-do_foldsplitting = True
+do_feature_extraction = False # normalization params?
+do_foldsplitting = False
 do_classifier_training = True
 
 if __name__ == '__main__':

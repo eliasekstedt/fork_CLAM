@@ -4,6 +4,10 @@ OPENAI_MEAN = [0.48145466, 0.4578275, 0.40821073]
 OPENAI_STD = [0.26862954, 0.26130258, 0.27577711]
 PBO_MEAN = [0.880189, 0.703230, 0.793672]
 PBO_STD = [0.123301, 0.195426, 0.128456]
+PBO_SUBS_MEAN = [0.8208, 0.5217, 0.6789]
+PBO_SUBS_STD = [0.1669, 0.2615, 0.1813]
+
+
 
 MODEL2CONSTANTS = {
 	"resnet50_trunc": {
@@ -29,5 +33,10 @@ MODEL2CONSTANTS = {
     {
         "mean": PBO_MEAN,
         "std": PBO_STD
+	},
+    "pbo_subs":
+    {
+        "mean": PBO_SUBS_MEAN,
+        "std": PBO_SUBS_STD,
 	}
 }

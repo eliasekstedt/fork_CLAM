@@ -16,8 +16,9 @@ from utils.transform_utils import get_eval_transforms
 
 class FeatureExtractor:
     def __init__(
-        self, dpath_patchset, dpath_mrxsRoot, dpath_features_pt, dpath_features_h5, fpath_map_patchset,
-        fpath_model, batch_size, patch_size, slide_extension, no_auto_skip,
+        self, dpath_patchset, dpath_mrxsRoot, dpath_features_pt, dpath_features_h5,
+        fpath_map_patchset, fpath_model, batch_size, patch_size, slide_extension,
+        no_auto_skip,
     ):
         self.dpath_patchset = dpath_patchset
         self.dpath_mrxsRoot = dpath_mrxsRoot
@@ -28,7 +29,7 @@ class FeatureExtractor:
         self.batch_size = batch_size
         self.patch_size = patch_size
         self.slide_extension = slide_extension
-        self.no_auto_skip=no_auto_skip
+        self.no_auto_skip = no_auto_skip
     
     def __call__(self):
         print('initializing dataset')
@@ -43,7 +44,7 @@ class FeatureExtractor:
 
         model = self.get_pbo_encoder(self.fpath_model)
 
-        constants = MODEL2CONSTANTS['pbo']
+        constants = MODEL2CONSTANTS['pbo_subs']
         img_transforms = get_eval_transforms(
             mean=constants['mean'],
             std=constants['std'],
@@ -54,7 +55,7 @@ class FeatureExtractor:
         model = model.to(device)
         total = len(bags_dataset)
 
-        loader_kwargs = {'num_workers': 8, 'pin_memory': True} if device.type == "cuda" else {}
+        loader_kwargs = {'num_workers': 0, 'pin_memory': True} if device.type == "cuda" else {}
         
         #with open('slidelog.txt', "r") as f:
         #    previously = [line.strip() for line in f]
@@ -78,7 +79,7 @@ class FeatureExtractor:
 
             """
             """
-            if not self.no_auto_skip and slide_id+'.pt' in dest_files:
+            if not self.no_auto_skip and slide_id + '.pt' in dest_files:
                 print('skipped {}'.format(slide_id))
                 continue 
             
