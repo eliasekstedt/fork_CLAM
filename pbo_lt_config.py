@@ -71,7 +71,7 @@ cfg.hparam = {
     'batch_size':1,
     'learning_rate':0.01,
     'weight_decay':1e-6,
-    'nr_epochs':250,
+    'nr_epochs':50,
 }
 cfg.augm = {
     'placeholder':True

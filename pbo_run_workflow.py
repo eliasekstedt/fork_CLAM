@@ -2,13 +2,13 @@
 from pbo_lt_config import *
 
 do_generate_patches = False
-do_feature_extraction = True
-do_foldsplitting = True
+do_feature_extraction = False
+do_foldsplitting = False
 do_classifier_training = True
 
 if __name__ == '__main__':
     if do_generate_patches:
-        from pbo_create_patchsets import PatchsetGenerator
+        from pbo_create_patchsets import PatchsetGenerator # coord finder
         patchset_generator = PatchsetGenerator(
             dpath_mrxs=cfg.dpath_mrxsRoot,
             dpath_patchRoot=cfg.dpath_patchRoot,
