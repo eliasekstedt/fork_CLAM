@@ -39,7 +39,7 @@ class PatchsetMapGenerator:
                     'age':row['age'],
                     'psa':row['psa'],
                     'isup':row['isup'],
-                    'label':row['positive']
+                    'label':int(row['isup'] > 1),
                 })
         return pd.DataFrame(patchset_map)
 
@@ -71,3 +71,12 @@ class ClassifierMapGenerator:
         assert map_fold_1[map_fold_1['case_id'].isin(fold_0_patient_ids)].shape[0] == 0
 
         return map_fold_0, map_fold_1
+
+
+from pbo_config import *
+PatchsetMapGenerator(
+    dpath_mrxs=cfg.dpath_mrxsRoot,
+    dpath_patchset=cfg.dpath_patchset,
+    fpath_map_patient=cfg.fpath_map_patient_info,
+    fpath_map_patchset=cfg.fpath_map_patchset,
+)

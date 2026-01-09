@@ -4,7 +4,7 @@ from pbo_lt_config import *
 do_generate_patches = False
 do_feature_extraction = False
 do_foldsplitting = False
-do_classifier_training = True
+do_classifier_training = False
 
 if __name__ == '__main__':
     if do_generate_patches:

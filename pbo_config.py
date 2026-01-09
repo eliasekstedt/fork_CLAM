@@ -13,8 +13,8 @@ cfg = SimpleNamespace()
 cfg.dpath_csvRoot = 'csv/'
 cfg.dpath_dataRoot = 'data/'
 
-#cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/'
-cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/'
+cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/'
+#cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/'
 
 cfg.dpath_patchRoot = os.path.join(cfg.dpath_dataRoot, 'data1_expatch/') #.h5
 cfg.dpath_patchset = os.path.join(cfg.dpath_patchRoot, 'patches')
