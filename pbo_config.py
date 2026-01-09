@@ -58,7 +58,6 @@ cfg.a_t = 1260
 cfg.a_h = 10
 cfg.max_holes = 800
 
-
 # feauture extraction
 cfg.fpath_Xmodel = os.path.join(cfg.dpath_dataRoot, 'Xmodel.ckpt')
 
