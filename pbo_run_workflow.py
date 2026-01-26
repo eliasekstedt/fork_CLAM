@@ -1,10 +1,10 @@
 
-from pbo_lt_config import *
+from pbo_config import *
 
-do_generate_patches = False
-do_feature_extraction = False
-do_foldsplitting = False
-do_classifier_training = False
+do_generate_patches = True
+do_feature_extraction = True
+do_foldsplitting = True
+do_classifier_training = True
 
 if __name__ == '__main__':
     if do_generate_patches:
@@ -80,6 +80,15 @@ if __name__ == '__main__':
             tag=cfg.tag,
             device='cuda:0',
         )
+
+"""
+potential problems:
+* does encoder return useful information
+    - expected augmentations?
+    - expected patch scale, i.e, number of nuclei that should fit on patch
+
+"""
+
 
 """
 should write down notes to expose what i dont understand about the workflow. for example:

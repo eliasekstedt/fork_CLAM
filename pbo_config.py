@@ -13,8 +13,8 @@ cfg = SimpleNamespace()
 cfg.dpath_csvRoot = 'csv/'
 cfg.dpath_dataRoot = 'data/'
 
-cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/'
-#cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/'
+#cfg.dpath_mrxsRoot = '../prosBiOps_wsi/wsi/'
+cfg.dpath_mrxsRoot = '../CLAM/data0_mrxs/'
 
 cfg.dpath_patchRoot = os.path.join(cfg.dpath_dataRoot, 'data1_expatch/') #.h5
 cfg.dpath_patchset = os.path.join(cfg.dpath_patchRoot, 'patches')
@@ -61,18 +61,18 @@ cfg.max_holes = 800
 # feauture extraction
 cfg.fpath_Xmodel = os.path.join(cfg.dpath_dataRoot, 'Xmodel.ckpt')
 
-cfg.fexparam_batch_size=512
-cfg.fexparam_patch_size=224
-cfg.fexparam_slide_extension='.mrxs'
-cfg.fexparam_no_auto_skip=False
+cfg.fexparam_batch_size = 512
+cfg.fexparam_patch_size = 224
+cfg.fexparam_slide_extension = '.mrxs'
+cfg.fexparam_no_auto_skip = False
 
-cfg.tag = 'real2026'
+cfg.tag = 'isup1_is_0'
 cfg.hparam = {
     'dropout': 0.0,
     'batch_size':1,
     'learning_rate':0.01,
     'weight_decay':1e-6,
-    'nr_epochs':250,
+    'nr_epochs':120,
 }
 cfg.augm = {
     'placeholder':True

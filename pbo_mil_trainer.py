@@ -161,13 +161,14 @@ class MilTrainWrapper:
         )
 
         lf_weights = 1.0 / counts
-        #print(lf_weights)
-        #print(lf_weights.sum())
         lf_weights = lf_weights / lf_weights.sum()
-        print(lf_weights)
+        logmore = {
+            'pos_rate':loader_0.dataset.map['label'].value_counts().tolist(),
+            'lf_weights':lf_weights,
+        }
         
         
-        runpath = self.init_run(hparam, augm, tag, device)
+        runpath = self.init_run(hparam, augm, logmore, tag, device)
         model = self.init_model(runpath, fpath_state_dict, hparam['dropout'], device)
         trainer = self.learn_parameters(
             runpath=runpath,
@@ -193,7 +194,7 @@ class MilTrainWrapper:
         loader_1 = DataLoader(reader_1, batch_size, shuffle=True)
         return loader_0, loader_1
 
-    def init_run(self, hparam, augmentation, tag, device):
+    def init_run(self, hparam, augmentation, logmore, tag, device):
         current = datetime.now()
         runpath = f'run/{tag}/{str(current)[8:10]}_{str(current)[11:13]}_{str(current)[14:16]}_{str(current)[17:19]}/'
         # create dir for run history if none exists
@@ -206,10 +207,14 @@ class MilTrainWrapper:
         with open(os.path.join(runpath, 'log.txt'), 'a') as file:
             file.write('################# initiating run #################\n')
             file.write(f'run dir has been created in {runpath}\n\n')
+            for key, val in {**hparam, **augmentation, **logmore}.items():
+                file.write(f'{key}\t: {val}\n')
+            """
             for param in hparam:
                 file.write(f'{param}\t: {hparam[param]}\n')
             for aug in augmentation:
                 file.write(f'{aug}\t: {augmentation[aug]}\n')
+            """
             file.write('\n')
             file.write(f'Using {device} device\n')
             file.write('################# initiated run ##################\n')

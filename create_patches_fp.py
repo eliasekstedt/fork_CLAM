@@ -1,3 +1,4 @@
+"""
 # internal imports
 from wsi_core.WholeSlideImage import WholeSlideImage
 from wsi_core.wsi_utils import StitchCoords
@@ -311,3 +312,5 @@ if __name__ == '__main__':
 											stitch= args.stitch,
 											patch_level=args.patch_level, patch = args.patch,
 											process_list = process_list, auto_skip=args.no_auto_skip)
+
+"""

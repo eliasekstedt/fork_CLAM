@@ -60,7 +60,7 @@ class ClassifierMapGenerator:
     def split_2fold(self, map_classifier):
         map_classifier = map_classifier.sample(frac=1)
         patient_ids = map_classifier['case_id'].unique()
-        wedge = len(patient_ids) // 2
+        wedge = int(len(patient_ids) * 0.8)
         fold_0_patient_ids = patient_ids[:wedge]
         fold_1_patient_ids = patient_ids[wedge:]
         map_fold_0 = map_classifier[map_classifier['case_id'].isin(fold_0_patient_ids)]

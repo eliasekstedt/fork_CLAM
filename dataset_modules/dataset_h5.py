@@ -2,20 +2,16 @@ import numpy as np
 import pandas as pd
 
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor
+#from torchvision.transforms import ToTensor
 
-from PIL import Image
+#from PIL import Image
 import h5py
 
+"""
 class Whole_Slide_Bag(Dataset):
 	def __init__(self,
 		file_path,
 		img_transforms=None):
-		"""
-		Args:
-			file_path (string): Path to the .h5 file containing patched data.
-			roi_transforms (callable, optional): Optional transform to be applied on a sample
-		"""
 		self.roi_transforms = img_transforms
 		self.file_path = file_path
 
@@ -44,6 +40,7 @@ class Whole_Slide_Bag(Dataset):
 		img = Image.fromarray(img)
 		img = self.roi_transforms(img)
 		return {'img': img, 'coord': coord}
+"""
 
 class Whole_Slide_Bag_FP(Dataset):
 	def __init__(self, file_path, wsi, img_transforms):
@@ -81,10 +78,7 @@ class Whole_Slide_Bag_FP(Dataset):
 		with h5py.File(self.file_path,'r') as hdf5_file:
 			coord = hdf5_file['coords'][idx]
 		img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
-
 		img = self.roi_transforms(img)
-		#cshow(img)
-		#raise SystemExit
 		return {'img': img, 'coord': coord}
 
 class Dataset_All_Bags(Dataset):
@@ -100,9 +94,4 @@ class Dataset_All_Bags(Dataset):
 
 
 
-def cshow(tensor):
-	import matplotlib.pyplot as plt
-	plt.imshow(np.transpose(tensor.detach().numpy(), (1, 2, 0)))
-	plt.savefig(f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png')
-	#savepath = f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png'
-	#tensor.save(savepath)
+

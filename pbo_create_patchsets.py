@@ -2,20 +2,14 @@
 # internal imports
 from wsi_core.WholeSlideImage import WholeSlideImage
 from wsi_core.wsi_utils import StitchCoords
-from wsi_core.batch_process_utils import initialize_df
+#from wsi_core.batch_process_utils import initialize_df
 # other imports
 import os
 import numpy as np
-from tqdm import tqdm
+#from tqdm import tqdm
 #import time
 #import pandas as pd
 from PIL import Image
-
-def dicprint(dict, tag):
-	print(tag)
-	for key in dict.keys():
-		print(key, dict[key])
-	print('\n')
 
 class PatchsetGenerator:
 	def __init__(self, dpath_mrxs, dpath_patchRoot, dpath_patchset, dpath_patchset_masks,

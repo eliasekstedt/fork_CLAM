@@ -1,3 +1,4 @@
+"""
 import os
 import pandas as pd
 import argparse
@@ -51,3 +52,4 @@ if __name__ == '__main__':
 	params_df = pd.DataFrame(all_params, index=[0])
 	params_df.to_csv('presets/{}'.format(args.preset_name), index=False)
 	
+"""

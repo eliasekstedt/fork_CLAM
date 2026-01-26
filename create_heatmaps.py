@@ -1,3 +1,4 @@
+"""
 from __future__ import print_function
 
 import numpy as np
@@ -526,3 +527,5 @@ if __name__ == '__main__':
         yaml.dump(config_dict, outfile, default_flow_style=False)
 
 
+
+"""

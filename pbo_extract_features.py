@@ -9,7 +9,7 @@ from tqdm import tqdm
 import numpy as np
 
 from utils.file_utils import save_hdf5
-from dataset_modules.dataset_h5 import Dataset_All_Bags, Whole_Slide_Bag_FP
+from dataset_modules.dataset_h5 import Whole_Slide_Bag_FP, Dataset_All_Bags
 #from models import get_encoder
 from utils.constants import MODEL2CONSTANTS
 from utils.transform_utils import get_eval_transforms
@@ -125,7 +125,7 @@ class FeatureExtractor:
                 batch = data['img']
                 coords = data['coord'].numpy().astype(np.int32)
                 batch = batch.to(device, non_blocking=True)
-                
+                #cshow(batch)# ***
                 features = model(batch)
                 features = features.cpu().numpy().astype(np.float32)
 
@@ -135,4 +135,16 @@ class FeatureExtractor:
         
         return output_path
 
-
+def cshow(batch, n=20):
+    from PIL import Image
+    for i in range(n):
+        tensor = batch[np.random.randint(0, batch.shape[0])]
+        tensor = np.transpose(tensor.cpu().numpy(), (1, 2, 0)) * 255
+        print(np.min(tensor), np.max(tensor), np.mean(tensor))
+        print(tensor.shape)
+        Image.fromarray(tensor.astype(np.uint8)).save(f'_diagnostics/d_img_{i}.png')
+    raise SystemExit
+    #plt.show()
+    #plt.imshow(np.transpose(tensor.detach().numpy(), (1, 2, 0)))
+    #savepath = f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png'
+    #tensor.save(savepath)
