@@ -4,6 +4,7 @@ notebooks
 data/
 data_using_normalization/
 **/_diagnostics/
+**/diagnostics/
 pbo_model/
 splits/
 run/

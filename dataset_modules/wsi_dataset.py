@@ -1,13 +1,7 @@
-from torchvision import transforms
-import pandas as pd
+
 import numpy as np
-import time
-import pdb
-import PIL.Image as Image
-import h5py
 from torch.utils.data import Dataset
-import torch
-from wsi_core.util_classes import Contour_Checking_fn, isInContourV1, isInContourV2, isInContourV3_Easy, isInContourV3_Hard
+from wsi_core.util_classes import isInContourV1, isInContourV2, isInContourV3_Easy, isInContourV3_Hard
 
 def get_contour_check_fn(contour_fn='four_pt_hard', cont=None, ref_patch_size=None, center_shift=None):
     if contour_fn == 'four_pt_hard':

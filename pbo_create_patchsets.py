@@ -6,7 +6,7 @@ from wsi_core.wsi_utils import StitchCoords
 # other imports
 import os
 import numpy as np
-#from tqdm import tqdm
+from tqdm import tqdm
 #import time
 #import pandas as pd
 from PIL import Image
@@ -43,7 +43,7 @@ class PatchsetGenerator:
 			and not slide == '.DS_Store'
 		]
 		live = True
-		for slide_id in slide_ids:
+		for slide_id in tqdm(slide_ids):
 			# Inialize WSI
 			slide_path = os.path.join(self.dpath_mrxs, slide_id)
 			WSI_object = WholeSlideImage(slide_path)
