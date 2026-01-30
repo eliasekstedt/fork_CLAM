@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 import h5py
 
 class Whole_Slide_Bag_FP(Dataset):
-	def __init__(self, file_path, wsi, img_transforms):
+	def __init__(self, file_path, wsi, img_transforms, quality_filter):
 		"""
 		Args:
 			file_path (string): Path to the .h5 file containing patched data.
@@ -12,8 +12,8 @@ class Whole_Slide_Bag_FP(Dataset):
 		"""
 		self.wsi = wsi
 		self.roi_transforms = img_transforms
-
 		self.file_path = file_path
+		self.quality_filter = quality_filter
 
 		with h5py.File(self.file_path, "r") as f:
 			dset = f['coords']
@@ -39,8 +39,20 @@ class Whole_Slide_Bag_FP(Dataset):
 		with h5py.File(self.file_path,'r') as hdf5_file:
 			coord = hdf5_file['coords'][idx]
 		img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
+		reject = self.quality_filter.apply(img)
+
+		"""
+		"""
+		import numpy as np
+		if reject and np.random.uniform(0, 1) < 1e-4:
+			from pathlib import Path
+			dpath_rejects = Path('_rejects')
+			dpath_rejects.mkdir(exist_ok=True)
+			fpath_reject = dpath_rejects / f"reject_{len(list(dpath_rejects.iterdir()))}.png"
+			img.save(fpath_reject)
+
 		img = self.roi_transforms(img)
-		return {'img': img, 'coord': coord}
+		return {'img': img, 'coord': coord, 'not_reject':not reject}
 
 class Dataset_All_Bags(Dataset):
 	def __init__(self, csv_path):

@@ -1,10 +1,10 @@
 
 from pbo_config import *
 
-do_generate_patches = True
+do_generate_patches = False
 do_feature_extraction = True
-do_foldsplitting = True
-do_classifier_training = True
+do_foldsplitting = False
+do_classifier_training = False
 
 if __name__ == '__main__':
     if do_generate_patches:
@@ -34,6 +34,7 @@ if __name__ == '__main__':
 
     if do_feature_extraction:
         from pbo_extract_features import FeatureExtractor
+        from patchQualVal import PatchFilter
         feature_extractor = FeatureExtractor(
             dpath_patchset=cfg.dpath_patchset,
             dpath_mrxsRoot=cfg.dpath_mrxsRoot,
@@ -45,6 +46,7 @@ if __name__ == '__main__':
             patch_size=cfg.fexparam_patch_size,
             slide_extension=cfg.fexparam_slide_extension,
             no_auto_skip=cfg.fexparam_no_auto_skip,
+            quality_filter=PatchFilter(),
         )
         feature_extractor()
 

@@ -1,10 +1,14 @@
 
+from pathlib import Path
 import os
 
 def create_dirs(*dirpaths):
     for dirpath in dirpaths:
-        if not os.path.isdir(dirpath):
-            os.makedirs(dirpath)
+        if type(dirpath) == type(Path):
+            dirpath.mkdir(exist_ok=True)
+        else:
+            if not os.path.isdir(dirpath):
+                os.makedirs(dirpath)
 
 
 from types import SimpleNamespace
@@ -31,7 +35,6 @@ cfg.dpath_features_h5 = os.path.join(cfg.dpath_featuresRoot, 'h5_files/')
 cfg.dpath_classifierRoot = os.path.join(cfg.dpath_dataRoot, 'data3_classifier')
 cfg.dpath_milFolds = os.path.join(cfg.dpath_csvRoot, 'milFolds')
 
-from pathlib import Path
 cfg.dpath_patch2encode_samples = Path('diagnostics/')
 
 create_dirs(
@@ -46,6 +49,7 @@ create_dirs(
     cfg.dpath_features_h5,
     cfg.dpath_classifierRoot,
     cfg.dpath_milFolds,
+    cfg.dpath_patch2encode_samples,
 )
 
 

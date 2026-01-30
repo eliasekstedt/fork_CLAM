@@ -18,7 +18,7 @@ class FeatureExtractor:
     def __init__(
         self, dpath_patchset, dpath_mrxsRoot, dpath_features_pt, dpath_features_h5,
         fpath_map_patchset, fpath_model, batch_size, patch_size, slide_extension,
-        no_auto_skip,
+        no_auto_skip, quality_filter,
     ):
         self.dpath_patchset = dpath_patchset
         self.dpath_mrxsRoot = dpath_mrxsRoot
@@ -30,6 +30,7 @@ class FeatureExtractor:
         self.patch_size = patch_size
         self.slide_extension = slide_extension
         self.no_auto_skip = no_auto_skip
+        self.quality_filter = quality_filter
     
     def __call__(self):
         print('initializing dataset')
@@ -75,6 +76,7 @@ class FeatureExtractor:
                 file_path=h5_file_path, 
                 wsi=wsi, 
                 img_transforms=img_transforms,
+                quality_filter=self.quality_filter,
             )
 
             loader = DataLoader(dataset=dataset, batch_size=self.batch_size, **loader_kwargs)
@@ -121,17 +123,26 @@ class FeatureExtractor:
 
         mode = 'w'
         for count, data in enumerate(tqdm(loader)):
-            with torch.inference_mode():	
-                batch = data['img']
-                coords = data['coord'].numpy().astype(np.int32)
+            with torch.inference_mode():
+                #print(data['not_reject'].shape, data['img'].shape, data['coord'].shape)
+                #print(not_rejects.shape, batch.shape, coords.shape)
+
+                not_rejects = data['not_reject']
+                batch = data['img'][not_rejects]
+                coords = data['coord'][not_rejects]
+                
+                coords = coords.numpy().astype(np.int32)
                 batch = batch.to(device, non_blocking=True)
-                #cshow(batch)# ***
+
                 features = model(batch)
                 features = features.cpu().numpy().astype(np.float32)
 
                 asset_dict = {'features': features, 'coords': coords}
                 save_hdf5(output_path, asset_dict, attr_dict= None, mode=mode)
                 mode = 'a'
+
+                with open('_rejects/log.txt', 'a') as file:
+                    file.write(f"batch reject rate: {1 - batch.shape[0] / not_rejects.shape[0]}\n")
         
         return output_path
 
