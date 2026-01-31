@@ -3,8 +3,8 @@ from pbo_config import *
 
 do_generate_patches = False
 do_feature_extraction = True
-do_foldsplitting = False
-do_classifier_training = False
+do_foldsplitting = True
+do_classifier_training = True
 
 if __name__ == '__main__':
     if do_generate_patches:

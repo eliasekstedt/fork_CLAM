@@ -125,7 +125,6 @@ class FeatureExtractor:
         for count, data in enumerate(tqdm(loader)):
             with torch.inference_mode():
                 #print(data['not_reject'].shape, data['img'].shape, data['coord'].shape)
-                #print(not_rejects.shape, batch.shape, coords.shape)
 
                 not_rejects = data['not_reject']
                 batch = data['img'][not_rejects]
@@ -137,12 +136,24 @@ class FeatureExtractor:
                 features = model(batch)
                 features = features.cpu().numpy().astype(np.float32)
 
+                """
+                print("not_rejects: {}\nbatch: {}\ncoords: {}\nfeatures".format(
+                    not_rejects.shape, batch.shape, coords.shape, features.shape
+                ))
+                """
+
+                with open('_rejects/log.txt', 'a') as file:
+                    file.write(f"batch reject rate: {1 - batch.shape[0] / not_rejects.shape[0]}\n")
+                
+                if not np.any(not_rejects.numpy()):
+                    print('not any non-rejects')
+                    print(output_path)
+                    continue
+
                 asset_dict = {'features': features, 'coords': coords}
                 save_hdf5(output_path, asset_dict, attr_dict= None, mode=mode)
                 mode = 'a'
 
-                with open('_rejects/log.txt', 'a') as file:
-                    file.write(f"batch reject rate: {1 - batch.shape[0] / not_rejects.shape[0]}\n")
         
         return output_path
 
