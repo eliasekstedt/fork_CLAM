@@ -83,7 +83,8 @@ class FeatureExtractor:
             output_file_path = self.compute_w_loader(device, output_path, loader, model)
 
             time_elapsed = time.time() - time_start
-            print('\ncomputing features for {} took {} s'.format(output_file_path, time_elapsed))
+            print('\ncomputing features for {} took {} s'.format(
+                output_file_path, time_elapsed))
 
             with h5py.File(output_file_path, "r") as file:
                 features = file['features'][:]

@@ -2,8 +2,8 @@
 from pbo_config import *
 
 do_generate_patches = False
-do_feature_extraction = True
-do_foldsplitting = True
+do_feature_extraction = False
+do_foldsplitting = False
 do_classifier_training = True
 
 if __name__ == '__main__':
@@ -51,6 +51,9 @@ if __name__ == '__main__':
         feature_extractor()
 
     if do_foldsplitting:
+        """
+        WARNING: currently done with label lekage
+        """
         from pbo_map_generators import ClassifierMapGenerator
         fold_splitter = ClassifierMapGenerator(
             fpath_map_patchset=cfg.fpath_map_patchset,
@@ -83,18 +86,13 @@ if __name__ == '__main__':
             device='cuda:0',
         )
 
-"""
-potential problems:
-* does encoder return useful information
-    - expected augmentations?
-    - expected patch scale, i.e, number of nuclei that should fit on patch
-
-"""
 
 
 """
-should write down notes to expose what i dont understand about the workflow. for example:
-* when is CLAM used in the workflow and why is it more suited than for example resnetX?
-* what is clustering based on, i.e what are the attributes?
-* when do attention mechanisms come in? feature extraction or after? how do attention mechanisms work?
+points to better replicate the article:
+* NOTE that patients and slides have already been excluded
+up to the point |processed images| in figure 1 consort diagram
+
+
+
 """

@@ -10,18 +10,22 @@ from datetime import datetime
 
 def plot_performance(protocol, runpath):
     epochs = range(1, len(protocol.valcost) + 1)
-    traincol_0 = 'tab:blue'
-    testcol_0 = 'tab:red'
     import matplotlib.pyplot as plt
-    plt.plot(epochs, protocol.traincost, traincol_0, label='train_0')
-    plt.plot(epochs, protocol.valcost, testcol_0, label='val_0')
-    #plt.ylim([0, 1.2*protocol.traincost_0[0]])
-    plt.legend()
-    plt.ylabel('Cost')
-    plt.tight_layout()
-    plt.savefig(f'{runpath}performance.png')
-    plt.figure()
-    plt.close('all')
+    for train_item, val_item, name in zip(
+        [protocol.traincost, protocol.trainperformance, protocol.train_tp, protocol.train_pp],
+        [protocol.valcost, protocol.valperformance, protocol.val_tp, protocol.val_pp],
+        ['cost', 'accuracy', 'true_positives', 'predicted_positives'],
+    ):
+        plt.plot(epochs, train_item, 'tab:blue', label='train_0')
+        plt.plot(epochs, val_item, 'tab:red', label='val_0')
+        plt.ylim([0, max(train_item + val_item + [1])]) # crude
+        plt.legend()
+        plt.ylabel(name)
+        plt.xlabel('Epoch')
+        plt.tight_layout()
+        plt.savefig(f'{runpath}{name}.png')
+        plt.figure()
+        plt.close('all')
 
 def file_it(file_name, message, to_terminal=False):
     if to_terminal:
@@ -52,17 +56,21 @@ class MILReader(Dataset):
 
 
 class MILTrainer:
-    def __init__(self, model, lr, lf_weights, weight_decay, device):
+    def __init__(self, model, lr, lf_weights, weight_decay, train_ap, val_ap, device):
         self.criterion = nn.CrossEntropyLoss(weight=lf_weights).to(device)
-        self.traincost, self.valcost = [], []
-        self.trainperformance, self.valperformance = [], []
-        self.train_pred_balance = []
+        self.train_ap, self.val_ap = train_ap, val_ap
+
+        self.traincost, self.trainperformance = [], []
+        self.train_tp, self.train_pp = [], []
+        self.valcost, self.valperformance = [], []
+        self.val_tp, self.val_pp = [], []
         self.current_best = None
+
         self.model = model
         self.optimizer = torch.optim.Adam(
             self.model.parameters(),
             lr=lr,
-            weight_decay=weight_decay
+            weight_decay=weight_decay,
         )
 
     def get_nr_accurate(self, logits, labels):
@@ -73,47 +81,70 @@ class MILTrainer:
 
     def train_epoch(self, trainloader, device):
         self.model.train()
-        cost, performance = 0, 0
-        ratio_0, ratio_1 = 0, 0
+        cost, performance, tp, pp = [0]*4
+        for features, label in trainloader:
+            features, label = features.squeeze(0).to(device), label.to(device)
+            logit, _, Y_hat, results_dict = self.model(features, label, True)
 
-        for features, labels in trainloader:
-            features, labels = features.squeeze(0).to(device), labels.to(device)
-            logits, _, Y_hat, results_dict = self.model(features, labels, True)
-        
-            ratio_0 += logits.argmax(1).item() / len(trainloader)
-            ratio_1 += labels.item() / len(trainloader)
+            pred_item = logit.argmax(1).item()
+            label_item = label.item()
+            if all([item == 1 for item in [pred_item, label_item]]):
+                tp += 1
+            if pred_item == 1:
+                pp += 1        
 
-            raw_loss = self.criterion(logits, labels)
+            raw_loss = self.criterion(logit, label)
             loss = 0.7 * raw_loss + (1 - 0.7) * results_dict['instance_loss']
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             cost += loss.item() / len(trainloader)
-            performance += self.get_nr_accurate(logits, labels) / len(trainloader.dataset)
+            performance += self.get_nr_accurate(logit, label) / len(trainloader.dataset)
         
-        self.train_pred_balance += [ratio_0 / ratio_1]
+        self.train_tp.append(tp)
+        self.train_pp.append(pp)
         self.traincost += [cost]
         self.trainperformance += [performance]
 
+
     def val_epoch(self, valloader, device):
         self.model.eval()
-        cost, performance = 0, 0
+        cost, performance, tp, pp = [0] * 4
+
         with torch.inference_mode():
-            for features, labels in valloader:
-                features, labels = features.squeeze(0).to(device), labels.to(device)
-                logits, _, _, _ = self.model(
-                    features,
-                    label=labels,
-                    instance_eval=True,
-                )
-                loss = self.criterion(logits, labels)
+            for features, label in valloader:
+                features, label = features.squeeze(0).to(device), label.to(device)
+                logit, _, _, _ = self.model(features, label=label, instance_eval=True)
+
+                pred_item = logit.argmax(1).item()
+                label_item = label.item()
+                if all([item == 1 for item in [pred_item, label_item]]):
+                    tp += 1
+                if pred_item == 1:
+                    pp += 1
+
+                loss = self.criterion(logit, label)
                 cost += loss.item() / len(valloader)
-                performance += self.get_nr_accurate(logits, labels) / len(valloader.dataset)
+                performance += self.get_nr_accurate(logit, label) / len(valloader.dataset)
+
+        self.val_tp.append(tp)
+        self.val_pp.append(pp)
         self.valcost += [cost]
         self.valperformance += [performance]
 
     def log_epoch(self, header, runpath, nr_epochs):
-        epoch_info = f'{len(self.valcost)}/{nr_epochs}\t{round(self.traincost[-1], 4)}/{round(self.valcost[-1], 4)}\t{round(self.trainperformance[-1], 4)}/{round(self.valperformance[-1], 4)}\t{self.train_pred_balance[-1]}\t{str(datetime.now())[11:19]}'
+        epoch_info = '{}/{}\t{}/{}\t{}/{}\t{}/{}     \t{}/{}     \t{}/{}     \t{}/{}\t{}'.format(
+            len(self.valcost), nr_epochs, round(self.traincost[-1], 4), round(self.valcost[-1], 4),
+            round(self.trainperformance[-1], 4), round(self.valperformance[-1], 4),
+            self.train_pp[-1], self.val_pp[-1],
+            self.train_tp[-1], self.val_tp[-1],
+            round(self.train_tp[-1] / (self.train_pp[-1] + 1e-8), 4), # precision
+            round(self.val_tp[-1] / (self.val_pp[-1] + 1e-8), 4),
+            round(self.train_tp[-1] / (self.train_ap + 1e-8), 4), # recall
+            round(self.val_tp[-1] / (self.val_ap + 1e-8), 4),
+            str(datetime.now())[11:19],
+        )
+
         if self.current_best is None or self.current_best >= self.valcost[-1]: # early stopping protocol
             self.current_best = self.valcost[-1]
             path_model = f"{runpath}model.pth"
@@ -128,7 +159,7 @@ class MILTrainer:
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
-        header = f'epoch\tloss\t\taccuracy\tbalns\ttime'
+        header = f'epoch\tloss\t\taccuracy\tpred_pos\ttrue_pos\tprecision\trecall  \ttime'
         print(header)
         for _ in range(1, nr_epochs+1):
             self.train_epoch(trainloader, device)
@@ -155,18 +186,20 @@ class MilTrainWrapper:
 
         # class rebalance
         print(loader_0.dataset.map)
-        counts = torch.tensor(
-            loader_0.dataset.map['label'].value_counts(),
+        counts_0, counts_1 = [torch.tensor(
+            loader.dataset.map['label'].value_counts(),
             dtype=torch.float
-        )
+        ) for loader in [loader_0, loader_1]]
 
-        lf_weights = 1.0 / counts
+        lf_weights = 1.0 / counts_0
         lf_weights = lf_weights / lf_weights.sum()
+
+        train_actual_pos, val_actual_pos = counts_0[1].item(), counts_1[1].item()
         logmore = {
             'pos_rate':loader_0.dataset.map['label'].value_counts().tolist(),
             'lf_weights':lf_weights,
+            'ap_train/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}",
         }
-        
         
         runpath = self.init_run(hparam, augm, logmore, tag, device)
         model = self.init_model(runpath, fpath_state_dict, hparam['dropout'], device)
@@ -179,6 +212,8 @@ class MilTrainWrapper:
             lr=hparam['learning_rate'],
             lf_weights=lf_weights,
             weight_decay=hparam['weight_decay'],
+            train_ap=train_actual_pos,
+            val_ap=val_actual_pos,
             device=device,
         )
 
@@ -237,9 +272,11 @@ class MilTrainWrapper:
         return model.to(device)
     
     def learn_parameters(self, runpath, loader_0, loader_1, model,
-        nr_epochs, lr, lf_weights, weight_decay, device):
+        nr_epochs, lr, lf_weights, weight_decay, train_ap, val_ap,
+        device,
+    ):
         print('init training ...')
-        trainer = MILTrainer(model, lr, lf_weights, weight_decay, device)
+        trainer = MILTrainer(model, lr, lf_weights, weight_decay, train_ap, val_ap, device)
         trainer.execute_train_protocol(
             trainloader=loader_0,
             valloader=loader_1,
