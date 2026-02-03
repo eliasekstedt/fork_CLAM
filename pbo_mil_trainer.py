@@ -1,11 +1,10 @@
 
 import os
 import pandas as pd
-from torch.utils.data import Dataset
+import numpy as np
 import torch
 import torch.nn as nn
-#import torch.nn.functional as F
-
+from torch.utils.data import Dataset
 from datetime import datetime
 
 def plot_performance(protocol, runpath):
@@ -55,6 +54,10 @@ class MILReader(Dataset):
             return slide_id, features, label
 
 
+
+
+
+
 class MILTrainer:
     def __init__(self, model, lr, lf_weights, weight_decay, train_ap, val_ap, device):
         self.criterion = nn.CrossEntropyLoss(weight=lf_weights).to(device)
@@ -73,16 +76,68 @@ class MILTrainer:
             weight_decay=weight_decay,
         )
 
+        #####
+        """
+        label_leakage related - for testing - delete
+        """
+
+        X, p = 512, 0.1
+        self.A = np.random.choice(range(X), int(X * p))
+        self.B = np.random.choice(range(X), int(X * p))
+        self.alt_feature_magn = 1.5
+        self.alt_feature_freq = 0.2
+        self.onoff = True
+        #####
+
     def get_nr_accurate(self, logits, labels):
         logits = logits.argmax(1)
         accurate_pred = (logits == labels)
         nr_accurate = accurate_pred.sum()
         return nr_accurate.item()
+    
+    
+    def leak_label(self, features, label):
+        #import matplotlib.pyplot as plt
+        """
+        for testing purposes. to be deleted.
+        standin for synthetic data
+        """
+
+        disabeled = False
+        if not disabeled:
+            indices = [self.A, self.B][label.item()]
+            alt_features = features.clone()
+            alt_features[:, :, indices] = features[:, :, indices] * self.alt_feature_magn
+
+            mask = torch.zeros_like(alt_features)
+
+            i_subset = np.random.choice(range(features.shape[1]), int(features.shape[1] * self.alt_feature_freq))
+            mask[:, i_subset, :] = 1
+            features = torch.where(mask==1, alt_features, features)
+            """
+            print(features.shape)
+            plt.imshow(np.where(features.squeeze(0).detach().numpy()==200, 200, 0), cmap='gray')
+            plt.tight_layout()
+            plt.show()
+            raise SystemExit
+            """
+        return features
 
     def train_epoch(self, trainloader, device):
         self.model.train()
         cost, performance, tp, pp = [0]*4
         for features, label in trainloader:
+
+            """
+            for testing
+            """
+            features = self.leak_label(features, label)
+
+
+            """
+            """
+
+
             features, label = features.squeeze(0).to(device), label.to(device)
             logit, _, Y_hat, results_dict = self.model(features, label, True)
 
@@ -113,6 +168,17 @@ class MILTrainer:
 
         with torch.inference_mode():
             for features, label in valloader:
+
+                """
+                for testing
+                """
+
+
+                features = self.leak_label(features, label)
+
+                """
+                """
+
                 features, label = features.squeeze(0).to(device), label.to(device)
                 logit, _, _, _ = self.model(features, label=label, instance_eval=True)
 
@@ -133,29 +199,57 @@ class MILTrainer:
         self.valperformance += [performance]
 
     def log_epoch(self, header, runpath, nr_epochs):
-        epoch_info = '{}/{}\t{}/{}\t{}/{}\t{}/{}     \t{}/{}     \t{}/{}     \t{}/{}\t{}'.format(
+        epoch_info = '{}/{}\t{}/{}\t{}/{}\t{}/{}     \t{}/{}     \t{}/{}     \t{}/{} \t{}'.format(
             len(self.valcost), nr_epochs, round(self.traincost[-1], 4), round(self.valcost[-1], 4),
             round(self.trainperformance[-1], 4), round(self.valperformance[-1], 4),
             self.train_pp[-1], self.val_pp[-1],
             self.train_tp[-1], self.val_tp[-1],
-            round(self.train_tp[-1] / (self.train_pp[-1] + 1e-8), 4), # precision
-            round(self.val_tp[-1] / (self.val_pp[-1] + 1e-8), 4),
-            round(self.train_tp[-1] / (self.train_ap + 1e-8), 4), # recall
-            round(self.val_tp[-1] / (self.val_ap + 1e-8), 4),
+            round(self.train_tp[-1] / (self.train_pp[-1] + 1e-8), 2), # precision
+            round(self.val_tp[-1] / (self.val_pp[-1] + 1e-8), 2),
+            round(self.train_tp[-1] / (self.train_ap + 1e-8), 2), # recall
+            round(self.val_tp[-1] / (self.val_ap + 1e-8), 2),
             str(datetime.now())[11:19],
         )
-
-        if self.current_best is None or self.current_best >= self.valcost[-1]: # early stopping protocol
-            self.current_best = self.valcost[-1]
+        epoch_score = self.valcost[-1] * (1 - self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
+        if self.current_best is None or self.current_best >= epoch_score: #self.valcost[-1]: # early stopping protocol
+            self.current_best = epoch_score
             path_model = f"{runpath}model.pth"
             record_history(path_model)
             torch.save(self.model.state_dict(), path_model)
             epoch_info = f'{epoch_info} saved!'
+
+        """
+        label leakage related - delete after tesing
+        """
+        
+        raise_condition = '*'
+        if len(self.valperformance) > 4:
+            delta = [0.0001, 0.0005][self.alt_feature_freq <= 0.05]
+            raise_condition = sum([item > 0.95 for item in self.valperformance[-4:]]) / len(self.valperformance) > 0.5
+            if raise_condition:
+                self.alt_feature_freq = round(self.alt_feature_freq - delta, 6)
+            else:
+                self.alt_feature_freq = round(self.alt_feature_freq + delta, 6)
+
+
+
+            """
+            if self.onoff and self.alt_feature_magn > 1.1:
+                self.alt_feature_magn = round(self.alt_feature_magn - 0.1, 1)
+            elif not self.onoff and self.alt_feature_freq > 0.0:
+                self.alt_feature_freq = round(self.alt_feature_freq - 0.01, 2)
+            self.onoff = not self.onoff
+            """
+
+        epoch_info = epoch_info + f'\t{self.alt_feature_freq}, {raise_condition}, {[item > 0.95 for item in self.valperformance[-4:]]}'#, {self.alt_feature_magn}'#, {self.onoff}'
+        ################################################
+
         print(epoch_info)
         with open(runpath + 'log.txt', 'a') as file:
             if len(self.valcost) <= 1:
                 file.write(header+'\n')
             file.write(epoch_info+'\n')
+
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
@@ -185,7 +279,6 @@ class MilTrainWrapper:
         )
 
         # class rebalance
-        print(loader_0.dataset.map)
         counts_0, counts_1 = [torch.tensor(
             loader.dataset.map['label'].value_counts(),
             dtype=torch.float
@@ -196,8 +289,8 @@ class MilTrainWrapper:
 
         train_actual_pos, val_actual_pos = counts_0[1].item(), counts_1[1].item()
         logmore = {
-            'pos_rate':loader_0.dataset.map['label'].value_counts().tolist(),
-            'lf_weights':lf_weights,
+            'nr_+_train/val':loader_0.dataset.map['label'].value_counts().tolist(),
+            'lf_weights':lf_weights.numpy(),
             'ap_train/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}",
         }
         

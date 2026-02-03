@@ -51,9 +51,6 @@ if __name__ == '__main__':
         feature_extractor()
 
     if do_foldsplitting:
-        """
-        WARNING: currently done with label lekage
-        """
         from pbo_map_generators import ClassifierMapGenerator
         fold_splitter = ClassifierMapGenerator(
             fpath_map_patchset=cfg.fpath_map_patchset,
@@ -65,6 +62,9 @@ if __name__ == '__main__':
         from pbo_mil_trainer import MilTrainWrapper
         """
         why does the train epoch factor in instance loss in loss calculation but not val epoch?
+        """
+        """
+        WARNING: in mil_trainer, using function leaks the label to the features
         """
 
         if cfg.state_dict == 'history': # if true, select most recent model
@@ -93,6 +93,7 @@ points to better replicate the article:
 * NOTE that patients and slides have already been excluded
 up to the point |processed images| in figure 1 consort diagram
 
-
+other areas:
+* verify that the shape of the data that enters the mil model makes sense
 
 """

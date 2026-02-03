@@ -4,18 +4,34 @@ import re
 import numpy as np
 yes = False
 
-class ClassifierMapGenerator:
+class BadMapGenerator:
     def __init__(self, fpath_map_patchset, fpath_map_fold_0, fpath_map_fold_1):
         mmap = pd.read_csv(fpath_map_patchset)
         mmap['case_id'] = mmap['patchset_id'].apply(self.get_case_id)
-        map_fold_0, map_fold_1 = self.split_kfold(mmap)
+        fold_0, fold_1 = self.split_kfold(mmap)
         if yes:
-            map_fold_0.to_csv(fpath_map_fold_0, index=False)
-            map_fold_1.to_csv(fpath_map_fold_1, index=False)
+            fold_0.to_csv(fpath_map_fold_0, index=False)
+            fold_1.to_csv(fpath_map_fold_1, index=False)
         else:
-            print(map_fold_0)
-            print(map_fold_1)
-        fold_0_label_0_ratio = 1 - (map_fold_0['label'].sum() / map_fold_0.shape[0])
+            """
+            tdf = pd.concat([fold_0, fold_1], axis=0)
+            print(tdf['age'].unique())
+            tdf.loc[tdf['age']=='<55', 'age'] = 0
+            tdf.loc[tdf['age']=='56-60', 'age'] = 1
+            tdf.loc[tdf['age']=='61-65', 'age'] = 2
+            tdf.loc[tdf['age']=='66-70', 'age'] = 3
+            tdf.loc[tdf['age']=='71-75', 'age'] = 4
+            tdf.loc[tdf['age']=='>75', 'age'] = 5
+            print(tdf)
+            #raise SystemExit
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+            sns.pairplot(tdf, hue='label')
+            plt.show()
+            """
+            print(fold_0)
+            print(fold_1)
+        fold_0_label_0_ratio = 1 - (fold_0['label'].sum() / fold_0.shape[0])
         print(f"label 0 ratio: {fold_0_label_0_ratio}")
 
     def get_case_id(self, patchset_id):
@@ -54,22 +70,16 @@ class ClassifierMapGenerator:
                 else:
                     fmap = pd.concat([fmap, fold], axis=0)
 
-            fscores = [score_fold(fold, dcol_names) for fold in folds]
-            print(fscores, np.std(fscores))
-            raise SystemExit
             return fmap
 
         dmap = mmap.copy()
         dmap['mod_psa'] = [np.floor(item) for item in dmap['psa'] / dmap['psa'].max() * 5]
         dmap = pd.get_dummies(dmap, columns=['age', 'isup'])
-        print(dmap)
         dcol_names = [col for col in dmap.columns if col not in mmap.columns]
         dmap[dcol_names] = dmap[dcol_names].astype(int)
-
         
         jcol_name = 'case_id'
         dmap = dmap.groupby('case_id')[dcol_names].mean().reset_index()
-
         fmap = create_balanced_splits(
             df=dmap[[jcol_name] + dcol_names],
             dcol_names=dcol_names,
@@ -83,22 +93,17 @@ class ClassifierMapGenerator:
             fold_id = row['fold_id']
             mmap.loc[mmap['case_id']==case_id, 'fold_id'] = fold_id
 
-        #fmap = mmap.merge(fmap, on=jcol_name)
         fold_0 = mmap[mmap['fold_id'] < 4]
         fold_1 = mmap[~mmap['fold_id'].isin(fold_0['fold_id'])]
         fold_0 = fold_0.drop(columns=['fold_id'])
         fold_1 = fold_1.drop(columns=['fold_id'])
-        print(fold_0['psa'].std(), fold_1['psa'].std())
-        print(fold_0['isup'].std(), fold_1['isup'].std())
-        return fold_0, fold_1
-        
-        #print(fmap.groupby('fold_id')[['psa', 'label']].mean())
-
+        #print(fold_0['psa'].std(), fold_1['psa'].std())
+        #print(fold_0['isup'].std(), fold_1['isup'].std())
+        return fold_0.sample(frac=1), fold_1.sample(frac=1)
 
 
 from pbo_config import *
-
-fold_splitter = ClassifierMapGenerator(
+fold_splitter = BadMapGenerator(
     fpath_map_patchset=cfg.fpath_map_patchset,
     fpath_map_fold_0=cfg.fpath_map_fold_0,
     fpath_map_fold_1=cfg.fpath_map_fold_1,
