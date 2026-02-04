@@ -73,16 +73,16 @@ cfg.fexparam_patch_size = 224
 cfg.fexparam_slide_extension = '.mrxs'
 cfg.fexparam_no_auto_skip = False
 
-cfg.tag = 'unplugged_leak'
+cfg.tag = 'no_more leaks'
 cfg.hparam = {
     'dropout': 0.0,
     'batch_size':1,
-    'learning_rate':0.01,
+    'learning_rate':0.1,
     'weight_decay':1e-6,
-    'nr_epochs':10000,
+    'nr_epochs':120,
 }
 cfg.augm = {
     'placeholder':True
 }
 
-cfg.state_dict = 'history'
+cfg.state_dict = ''

@@ -95,5 +95,29 @@ up to the point |processed images| in figure 1 consort diagram
 
 other areas:
 * verify that the shape of the data that enters the mil model makes sense
+* meaning of 'Setting tau to 1.0'
+* architecture single_branch + small. perhaps i took some things for
+granted when transcribing the model. e.g, gated or not? did the size get translated
+properly? what about cross entropy bag loss as loss function?
 
+"""
+
+"""
+potentially low quality coord extraction:
+* 069
+* 078
+* 089
+* 104
+* 106
+* 113
+* 118
+* 124
+* 136
+* 137
+* 151_G
+* 154
+* 166
+
+needle:
+* 046, 075
 """

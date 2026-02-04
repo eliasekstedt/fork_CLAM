@@ -1,4 +1,5 @@
 
+"""
 import os
 import pandas as pd
 import numpy as np
@@ -53,6 +54,11 @@ class MILReader(Dataset):
         else:
             return slide_id, features, label
 
+
+
+
+
+
 class MILTrainer:
     def __init__(self, model, lr, lf_weights, weight_decay, train_ap, val_ap, device):
         self.criterion = nn.CrossEntropyLoss(weight=lf_weights).to(device)
@@ -71,16 +77,63 @@ class MILTrainer:
             weight_decay=weight_decay,
         )
 
+        #####
+
+        #label_leakage related - for testing - delete
+
+
+        X, p = 512, 0.1
+        self.A = np.random.choice(range(X), int(X * p))
+        self.B = np.random.choice(range(X), int(X * p))
+        self.alt_feature_magn = 1.5
+        self.alt_feature_freq = 0.1
+        self.onoff = True
+        #####
+
     def get_nr_accurate(self, logits, labels):
         logits = logits.argmax(1)
         accurate_pred = (logits == labels)
         nr_accurate = accurate_pred.sum()
         return nr_accurate.item()
+    
+    
+    def leak_label(self, features, label):
+        #import matplotlib.pyplot as plt
+        #for testing purposes. to be deleted.
+        #standin for synthetic data
+
+
+        disabeled = False
+        if not disabeled:
+            indices = [self.A, self.B][label.item()]
+            alt_features = features.clone()
+            alt_features[:, :, indices] = features[:, :, indices] * self.alt_feature_magn
+
+            mask = torch.zeros_like(alt_features)
+
+            i_subset = np.random.choice(range(features.shape[1]), int(features.shape[1] * self.alt_feature_freq))
+            mask[:, i_subset, :] = 1
+            features = torch.where(mask==1, alt_features, features)
+
+            #print(features.shape)
+            #plt.imshow(np.where(features.squeeze(0).detach().numpy()==200, 200, 0), cmap='gray')
+            #plt.tight_layout()
+            #plt.show()
+            #raise SystemExit
+
+        return features
 
     def train_epoch(self, trainloader, device):
         self.model.train()
         cost, performance, tp, pp = [0]*4
         for features, label in trainloader:
+
+            #for testing
+
+            features = self.leak_label(features, label)
+
+
+
             features, label = features.squeeze(0).to(device), label.to(device)
             logit, _, Y_hat, results_dict = self.model(features, label, True)
 
@@ -104,12 +157,23 @@ class MILTrainer:
         self.traincost += [cost]
         self.trainperformance += [performance]
 
+
     def val_epoch(self, valloader, device):
         self.model.eval()
         cost, performance, tp, pp = [0] * 4
 
         with torch.inference_mode():
             for features, label in valloader:
+
+
+                #for testing
+
+
+
+                features = self.leak_label(features, label)
+
+
+
                 features, label = features.squeeze(0).to(device), label.to(device)
                 logit, _, _, _ = self.model(features, label=label, instance_eval=True)
 
@@ -148,6 +212,26 @@ class MILTrainer:
             record_history(path_model)
             torch.save(self.model.state_dict(), path_model)
             epoch_info = f'{epoch_info} saved!'
+
+        label leakage related - delete after tesing
+        nn = 7
+        reduce_condition = 'NA'
+        if len(self.valperformance) > nn:
+            delta = [0.001, 0.0001][self.alt_feature_freq <= 0.05]
+            reduce_condition = sum([item > 0.95 for item in self.valperformance[-nn:]]) / nn > 0.5
+            if reduce_condition:
+                self.alt_feature_freq = round(self.alt_feature_freq - delta, 6)
+            else:
+                self.alt_feature_freq = round(self.alt_feature_freq + delta, 6)
+            if self.onoff and self.alt_feature_magn > 1.1:
+                self.alt_feature_magn = round(self.alt_feature_magn - 0.1, 1)
+            elif not self.onoff and self.alt_feature_freq > 0.0:
+                self.alt_feature_freq = round(self.alt_feature_freq - 0.01, 2)
+            self.onoff = not self.onoff
+
+
+        epoch_info = epoch_info + f'\t{self.alt_feature_freq}, {reduce_condition}, {[item > 0.95 for item in self.valperformance[-nn:]]}'#, {self.alt_feature_magn}'#, {self.onoff}'
+        ################################################
 
         print(epoch_info)
         with open(runpath + 'log.txt', 'a') as file:
@@ -242,12 +326,6 @@ class MilTrainWrapper:
             file.write(f'run dir has been created in {runpath}\n\n')
             for key, val in {**hparam, **augmentation, **logmore}.items():
                 file.write(f'{key}\t: {val}\n')
-            """
-            for param in hparam:
-                file.write(f'{param}\t: {hparam[param]}\n')
-            for aug in augmentation:
-                file.write(f'{aug}\t: {augmentation[aug]}\n')
-            """
             file.write('\n')
             file.write(f'Using {device} device\n')
             file.write('################# initiated run ##################\n')
@@ -283,3 +361,4 @@ class MilTrainWrapper:
             device=device,
         )
         return trainer
+"""
