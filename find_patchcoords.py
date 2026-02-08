@@ -11,10 +11,11 @@ from tqdm import tqdm
 #import pandas as pd
 from PIL import Image
 
-class PatchsetGenerator:
+class PatchCoordMapper:
 	def __init__(self, dpath_mrxs, dpath_patchRoot, dpath_patchset, dpath_patchset_masks,
-		dpath_patchset_stitch, mthresh, close, a_t, a_h, max_holes,
+		dpath_patchset_stitch, mthresh, close, a_t, a_h, max_holes, live,
 	):
+		self.live = live
 		self.dpath_mrxs = dpath_mrxs
 		self.dpath_patchRoot = dpath_patchRoot
 		self.dpath_patchset = dpath_patchset
@@ -34,7 +35,6 @@ class PatchsetGenerator:
 
 		self.vis_params = {'vis_level':-1, 'line_thickness':250}
 
-	
 	def __call__(self):
 		slides = sorted(os.listdir(self.dpath_mrxs))
 		slide_ids = [
@@ -42,7 +42,7 @@ class PatchsetGenerator:
 			if os.path.isfile(os.path.join(self.dpath_mrxs, slide))
 			and not slide == '.DS_Store'
 		]
-		live = True
+		
 		for slide_id in tqdm(slide_ids):
 			# Inialize WSI
 			slide_path = os.path.join(self.dpath_mrxs, slide_id)
@@ -62,7 +62,7 @@ class PatchsetGenerator:
 				max_holes=self.max_holes,
 			)
 
-			if live:
+			if self.live:
 				mask = WSI_object.visWSI(**self.vis_params)
 				mask_name = f"{slide_id.rstrip('.mrsx')}.jpg"
 				mask_path = os.path.join(
@@ -80,7 +80,7 @@ class PatchsetGenerator:
 			file_path = os.path.join(self.dpath_patchset, slide_id.rstrip('.mrxs')+'.h5')
 
 			if os.path.isfile(file_path):
-				if live:
+				if self.live:
 					heatmap = StitchCoords(file_path, WSI_object, downscale=64, bg_color=(0,0,0), alpha=-1, draw_grid=False)
 					stitch_path = os.path.join(self.dpath_patchset_stitch, slide_id.rstrip('.mrxs')+'.jpg')
 					heatmap.save(stitch_path)
@@ -88,9 +88,10 @@ class PatchsetGenerator:
 					mask = np.array(WSI_object.visWSI(**self.vis_params))
 					heatmap = np.array(StitchCoords(file_path, WSI_object, downscale=64, bg_color=(0,0,0), alpha=-1, draw_grid=False))
 					assem = Image.fromarray(np.concatenate([mask, heatmap], axis=1))
-					dpath_assem = f"../diagnostics/regutted1"
+					dpath_assem = f"../data/biops_diagnostics/the_return_0/"
 					if not os.path.isdir(dpath_assem):
 						os.makedirs(dpath_assem)
 					assem_name = f"{slide_id.rstrip('.mrsx')}.jpg"
 					fpath_assem = os.path.join(dpath_assem, assem_name)
 					assem.save(fpath_assem)
+					raise SystemExit

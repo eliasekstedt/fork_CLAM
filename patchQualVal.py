@@ -17,10 +17,6 @@ def gshow(tensor):
 class PatchFilter:
     def __init__(self):
         pass
-        #from pathlib import Path
-        #self.filtrRoot = Path('filtrRoot')
-        #self.bins = [i for i in range(0, 160, 10)]
-        #self.create_bins()
 
     def on_blot(self, patch):
         r, g, b = np.array_split(patch, patch.shape[-1], axis=2)
@@ -68,9 +64,6 @@ class Validator:
 
             fpath_coords = dpath_coords / fpath_mrxs.name.replace('.mrxs', '.h5')
             fpath_sample = dpath_samples / fpath_mrxs.name.replace('.mrxs', '.png').lstrip('patient_')
-            #if not '046_' in fpath_sample.name:
-            #    continue
-
             
             wsi = openslide.open_slide(fpath_mrxs)
             coords, patch_size, lvl = self.get_sample_meta(fpath_coords)

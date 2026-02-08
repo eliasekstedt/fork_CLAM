@@ -1,35 +1,40 @@
 
 from pbo_config import *
-
+do_assemble_patient_info = True
 do_generate_patches = False
 do_feature_extraction = False
 do_foldsplitting = False
-do_classifier_training = True
+do_classifier_training = False
 
 if __name__ == '__main__':
+    if do_assemble_patient_info:
+        pass
+
+
     if do_generate_patches:
-        from pbo_create_patchsets import PatchsetGenerator # coord finder
-        patchset_generator = PatchsetGenerator(
+        from find_patchcoords import PatchCoordMapper # coord finder
+        patchset_generator = PatchCoordMapper(
             dpath_mrxs=cfg.dpath_mrxsRoot,
             dpath_patchRoot=cfg.dpath_patchRoot,
-            dpath_patchset=cfg.dpath_patchset,
-            dpath_patchset_masks=cfg.dpath_patchset_masks,
-            dpath_patchset_stitch=cfg.dpath_patchset_stitch,
+            dpath_patchset=cfg.dpath_patchcoords,
+            dpath_patchset_masks=cfg.dpath_patchcoords_masks,
+            dpath_patchset_stitch=cfg.dpath_patchcoords_stitch,
             mthresh=cfg.mthresh,
             close=cfg.close,
             a_t=cfg.a_t,
             a_h=cfg.a_h,
             max_holes=cfg.max_holes,
+            live=False,
         )
         patchset_generator()
 
         # generate map1_mrxsSlides.csv
-        from pbo_map_generators import PatchsetMapGenerator
-        PatchsetMapGenerator(
+        from pbo_map_generators import PatchcoordMapGenerator
+        PatchcoordMapGenerator(
             dpath_mrxs=cfg.dpath_mrxsRoot,
             dpath_patchset=cfg.dpath_patchset,
             fpath_map_patient=cfg.fpath_map_patient_info,
-            fpath_map_patchset=cfg.fpath_map_patchset,
+            fpath_map_patchset=cfg.fpath_map_patchcoords,
         )
 
     if do_feature_extraction:
@@ -63,10 +68,6 @@ if __name__ == '__main__':
         """
         why does the train epoch factor in instance loss in loss calculation but not val epoch?
         """
-        """
-        WARNING: in mil_trainer, using function leaks the label to the features
-        """
-
         if cfg.state_dict == 'history': # if true, select most recent model
             with open(f"run/history/history.txt", 'r') as file:
                 fpath_state_dict = file.readlines()[-1]
@@ -99,7 +100,6 @@ other areas:
 * architecture single_branch + small. perhaps i took some things for
 granted when transcribing the model. e.g, gated or not? did the size get translated
 properly? what about cross entropy bag loss as loss function?
-
 """
 
 """

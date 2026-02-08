@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import numpy as np
 
-class PatchsetMapGenerator:
+class PatchcoordMapGenerator:
     def __init__(self, dpath_mrxs, dpath_patchset, fpath_map_patient, fpath_map_patchset):
         patchset_ids = [
             id.rstrip('.h5')
