@@ -211,7 +211,8 @@ def DrawMapFromCoords(canvas, wsi_object, coords, patch_size, vis_level, indices
     patch_size = tuple(np.ceil((np.array(patch_size)/np.array(downsamples))).astype(np.int32))
     #print('downscaled patch size: {}x{}'.format(patch_size[0], patch_size[1]))
     
-    for idx in tqdm(range(total)):        
+    #for idx in tqdm(range(total)):
+    for idx in range(total):
         patch_id = indices[idx]
         coord = coords[patch_id]
         patch = np.array(wsi_object.wsi.read_region(tuple(coord), vis_level, patch_size).convert("RGB"))

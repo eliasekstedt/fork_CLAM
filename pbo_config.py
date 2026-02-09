@@ -49,7 +49,7 @@ create_dirs(
     cfg.dpath_patch2encode_samples,
 )
 
-
+cfg.fpath_map_approved = Path('...')
 cfg.fpath_map_patient_info = os.path.join(cfg.dpath_csvRoot, 'patient_info.csv')
 cfg.fpath_map_patchcoords = os.path.join(cfg.dpath_csvRoot, 'map_patchcoords.csv')
 cfg.fpath_map_fold_0 = os.path.join(cfg.dpath_milFolds, 'map_fold_0.csv')

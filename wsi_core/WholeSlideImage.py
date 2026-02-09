@@ -21,7 +21,7 @@ Image.MAX_IMAGE_PIXELS = 933120000
 
 class WholeSlideImage(object):
     def __init__(self, slide_path):
-        self.name = os.path.splitext(os.path.basename(slide_path))[0]
+        self.name = os.path.splitext(os.path.basename(slide_path))[0].lstrip('patient_')
         self.wsi = openslide.open_slide(slide_path)
         self.level_downsamples = self._assertLevelDownsamples()
         self.level_dim = self.wsi.level_dimensions

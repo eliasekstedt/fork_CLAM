@@ -1,4 +1,4 @@
-slide_id,category,mtresh,close,a_t,a_h
+slide_id,category,mthresh,close,a_t,a_h
 001_ABC,1,7,18,1000,10
 001_DEF,1,7,18,1000,10
 002_ABC,1,7,18,1000,10
