@@ -1,7 +1,8 @@
 
-from pbo_config import *
+from config import *
 
 do_generate_coords = False
+do_qualVal = True
 do_feature_extraction = False
 do_foldsplitting = False
 do_classifier_training = False
@@ -21,10 +22,19 @@ if __name__ == '__main__':
         )
         cw()
 
+    if do_qualVal:
+        from quality_measure import QALooper
+        QALooper(
+            dpath_wsiRoot=cfg.dpath_wsiRoot,
+            dpath_qualityLog=cfg.dpath_qualityLog,
+            dpath_wsiCoords=cfg.dpath_wsiCoords,
+            fpath_segmlog=cfg.fpath_segmlog,
+        )
+
 
     if do_feature_extraction:
         from pbo_extract_features import FeatureExtractor
-        from patchQualVal import PatchFilter
+        
         feature_extractor = FeatureExtractor(
             dpath_patchset=cfg.dpath_patchset,
             dpath_mrxsRoot=cfg.dpath_mrxsRoot,

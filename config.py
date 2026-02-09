@@ -13,13 +13,14 @@ cfg = SimpleNamespace()
 cfg.dpath_wsiRoot = Path(wsi_origin)
 
 cfg.dpath_csvRoot = Path('csv/')
+cfg.dpath_qualityLog = cfg.dpath_csvRoot / 'quality_log'
 cfg.dpath_milFolds = cfg.dpath_csvRoot / 'milFolds'
 
 
 cfg.dpath_dataRoot = Path('data/')
 
 cfg.dpath_wsiCoordRoot = cfg.dpath_dataRoot / '0_wsiCoordRoot'
-cfg.dpath_wsiCoord = cfg.dpath_wsiCoordRoot / 'coord'
+cfg.dpath_wsiCoords = cfg.dpath_wsiCoordRoot / 'coord'
 cfg.dpath_mask = cfg.dpath_wsiCoordRoot / 'mask'
 cfg.dpath_stitch = cfg.dpath_wsiCoordRoot / 'stitch'
 
@@ -34,8 +35,9 @@ cfg.dpath_diagnostics = cfg.dpath_dataRoot / 'diagnostics'
 create_dirs(
     cfg.dpath_csvRoot,
     cfg.dpath_dataRoot,
+    cfg.dpath_qualityLog,
     cfg.dpath_wsiCoordRoot,
-    cfg.dpath_wsiCoord,
+    cfg.dpath_wsiCoords,
     cfg.dpath_mask,
     cfg.dpath_stitch,
     cfg.dpath_featureRoot,
@@ -49,7 +51,7 @@ create_dirs(
 cfg.fpath_patientInfo = cfg.dpath_csvRoot / 'patient_info.csv'
 cfg.fpath_segmParam = cfg.dpath_csvRoot / 'segmParams.csv'
 cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
-cfg.fpath_coordlog = cfg.dpath_csvRoot / 'coordlog.csv'
+#cfg.fpath_coordlog = cfg.dpath_csvRoot / 'coordlog.csv'
 cfg.fpath_wsiCoords = cfg.dpath_csvRoot / 'map_patchcoords.csv'
 cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
 cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
