@@ -30,6 +30,15 @@ if __name__ == '__main__':
             dpath_wsiCoords=cfg.dpath_wsiCoords,
             fpath_segmlog=cfg.fpath_segmlog,
         )
+        from patch_quality_check import QDock
+        QDock(
+            dpath_wsiRoot=cfg.dpath_wsiRoot,
+            dpath_wsiCoords=cfg.dpath_wsiCoords,
+            dpath_qualityLog=cfg.dpath_qualityLog,
+            dpath_diagnostics=cfg.dpath_diagnostics,
+            fltr_params=cfg.fltr_params,
+        )
+
 
     if do_feature_extraction:
         from extract_features import FeatureExtractor

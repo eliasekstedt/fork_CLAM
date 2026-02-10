@@ -56,6 +56,13 @@ cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
 cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
 cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 
+cfg.fltr_params = {
+    'll_bg':0.5,
+    'll_blur':40,
+    'll_dist':30,
+    'ul_dist':200,
+}
+
 # feauture extraction
 cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
 
