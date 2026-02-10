@@ -31,10 +31,8 @@ if __name__ == '__main__':
             fpath_segmlog=cfg.fpath_segmlog,
         )
 
-
     if do_feature_extraction:
-        from pbo_extract_features import FeatureExtractor
-        
+        from extract_features import FeatureExtractor
         feature_extractor = FeatureExtractor(
             dpath_patchset=cfg.dpath_patchset,
             dpath_mrxsRoot=cfg.dpath_mrxsRoot,
@@ -46,9 +44,17 @@ if __name__ == '__main__':
             patch_size=cfg.fexparam_patch_size,
             slide_extension=cfg.fexparam_slide_extension,
             no_auto_skip=cfg.fexparam_no_auto_skip,
-            quality_filter=PatchFilter(),
         )
         feature_extractor()
+
+
+
+
+
+
+
+
+
 
     if do_foldsplitting:
         from pbo_map_generators import ClassifierMapGenerator

@@ -1,5 +1,5 @@
 
-from pbo_config import *
+from _archive.pbo_config import *
 from pathlib import Path
 from PIL import Image
 from tqdm import tqdm

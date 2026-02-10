@@ -5,7 +5,7 @@ import h5py
 import openslide
 from torchvision.transforms import ToTensor, Compose
 from torch.utils.data import DataLoader, Dataset
-from pbo_config import cfg
+from _archive.pbo_config import cfg
 from tqdm import tqdm
 
 

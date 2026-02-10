@@ -52,7 +52,7 @@ cfg.fpath_patientInfo = cfg.dpath_csvRoot / 'patient_info.csv'
 cfg.fpath_segmParam = cfg.dpath_csvRoot / 'segmParams.csv'
 cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
 #cfg.fpath_coordlog = cfg.dpath_csvRoot / 'coordlog.csv'
-cfg.fpath_wsiCoords = cfg.dpath_csvRoot / 'map_patchcoords.csv'
+#cfg.fpath_wsiCoords = cfg.dpath_csvRoot / 'map_patchcoords.csv'
 cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
 cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 

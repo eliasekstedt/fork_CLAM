@@ -37,7 +37,7 @@ class PatchFilter:
 
 class QualityAssigner:
     def __init__(self, wsi, fpath_wsiCoords, fpath_qualityLog, fltr):
-        slide_id = fpath_wsiCoords.name.rstrip('.csv')
+        slide_id = fpath_wsiCoords.name.rstrip('.h5')
         with h5py.File(fpath_wsiCoords, "r") as file:
             coords = file['coords'][:]
             patch_level = file['coords'].attrs['patch_level']

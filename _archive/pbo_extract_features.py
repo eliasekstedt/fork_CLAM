@@ -154,20 +154,5 @@ class FeatureExtractor:
                 asset_dict = {'features': features, 'coords': coords}
                 save_hdf5(output_path, asset_dict, attr_dict= None, mode=mode)
                 mode = 'a'
-
-        
         return output_path
 
-def cshow(batch, n=20):
-    from PIL import Image
-    for i in range(n):
-        tensor = batch[np.random.randint(0, batch.shape[0])]
-        tensor = np.transpose(tensor.cpu().numpy(), (1, 2, 0)) * 255
-        print(np.min(tensor), np.max(tensor), np.mean(tensor))
-        print(tensor.shape)
-        Image.fromarray(tensor.astype(np.uint8)).save(f'_diagnostics/d_img_{i}.png')
-    raise SystemExit
-    #plt.show()
-    #plt.imshow(np.transpose(tensor.detach().numpy(), (1, 2, 0)))
-    #savepath = f'data/delme_diagnostics/{np.random.uniform(0, 1)}.png'
-    #tensor.save(savepath)

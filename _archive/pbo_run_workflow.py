@@ -1,5 +1,5 @@
 
-from pbo_config import *
+from _archive.pbo_config import *
 do_assemble_patient_info = True
 do_generate_patches = False
 do_feature_extraction = False
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     if do_feature_extraction:
         from pbo_extract_features import FeatureExtractor
-        from patchQualVal import PatchFilter
+        from _archive.patchQualVal import PatchFilter
         feature_extractor = FeatureExtractor(
             dpath_patchset=cfg.dpath_patchset,
             dpath_mrxsRoot=cfg.dpath_mrxsRoot,
