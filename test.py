@@ -161,6 +161,14 @@ def test2():
     print(quality_stats)
     scatter_matrix(quality_stats, cfg.dpath_diagnostics)
     
+def test3():
+    import numpy as np
+    nr_splits = 7
+    fpaths = [f"p{i}" for i in range(nr_splits)]
+    size = 512
+
+    
+
 
 
         
@@ -170,7 +178,8 @@ def test2():
 
 #test0()
 #test1()
-test2()
+#test2()
+test3()
 
 
 

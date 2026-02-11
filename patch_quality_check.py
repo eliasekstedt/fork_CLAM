@@ -18,7 +18,7 @@ class QDock:
     def __init__(self, dpath_wsiRoot, dpath_wsiCoords, dpath_qualityLog,
         dpath_diagnostics, fltr_params,
     ):
-        fpaths_qlog = dpath_qualityLog.iterdir()
+        #fpaths_qlog = dpath_qualityLog.iterdir()
         self.check_extraction_geometry(
             dpath_wsiRoot=dpath_wsiRoot,
             dpath_wsiCoords=dpath_wsiCoords,
@@ -139,7 +139,6 @@ class QDock:
             slide_id = fpath_qlog.name.rstrip('.csv')
             qlog = pd.read_csv(fpath_qlog).sort_values(by=['pos_x', 'pos_y'])
             
-            #xcentr_subset = qlog[qlog['pos_x'] == qlog['pos_x'].median()]
             xcentr_subset = qlog[qlog['pos_x'] == qlog['pos_x'].iloc[qlog.shape[0]//2]]
             if xcentr_subset.empty:
                 print(f'no_geocheck for {slide_id}')
@@ -183,6 +182,6 @@ class QDock:
             
         per_slide_info = pd.DataFrame(per_slide_info)
         gen_scatter_matrix(per_slide_info, dpath_diagnostics)
-        #per_slide_info.to_csv(dpath_diagnostics / 'per_slide_info.csv', index=False)
+        per_slide_info.to_csv(dpath_diagnostics / 'per_slide_info.csv', index=False)
         return per_slide_info
         

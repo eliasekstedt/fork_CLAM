@@ -2,8 +2,9 @@
 from config import *
 
 do_generate_coords = False
-do_qualVal = True
-do_feature_extraction = False
+do_qualVal = False
+do_patch_quality_check = False
+do_feature_extraction = True
 do_foldsplitting = False
 do_classifier_training = False
 
@@ -30,6 +31,8 @@ if __name__ == '__main__':
             dpath_wsiCoords=cfg.dpath_wsiCoords,
             fpath_segmlog=cfg.fpath_segmlog,
         )
+
+    if do_patch_quality_check:
         from patch_quality_check import QDock
         QDock(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
@@ -41,18 +44,20 @@ if __name__ == '__main__':
 
 
     if do_feature_extraction:
-        from extract_features import FeatureExtractor
-        feature_extractor = FeatureExtractor(
-            dpath_patchset=cfg.dpath_patchset,
-            dpath_mrxsRoot=cfg.dpath_mrxsRoot,
-            dpath_features_pt=cfg.dpath_features_pt,
-            dpath_features_h5=cfg.dpath_features_h5,
-            fpath_map_patchset=cfg.fpath_map_patchset,
-            fpath_model=cfg.fpath_Xmodel,
-            batch_size=cfg.fexparam_batch_size,
-            patch_size=cfg.fexparam_patch_size,
-            slide_extension=cfg.fexparam_slide_extension,
-            no_auto_skip=cfg.fexparam_no_auto_skip,
+        from encode_patches import FeatureX
+        feature_extractor = FeatureX(
+            dpath_qualityLog=cfg.dpath_qualityLog,
+            dpath_wsiRoot=cfg.dpath_wsiRoot,
+            dpath_ptFeature=cfg.dpath_ptFeature,
+            dpath_h5Feature=cfg.dpath_h5Feature,
+            fpath_segmlog=cfg.fpath_segmlog,
+            fpath_encodingPrgs=cfg.fpath_encodingPrgs,
+            fpath_encodingMap=cfg.fpath_encodingMap,
+            fpath_Xmodel=cfg.fpath_Xmodel,
+            fpath_patientInfo=cfg.fpath_patientInfo,
+            batch_size=cfg.X_batch_size,
+            patch_size=cfg.X_patch_size,
+            fltr_params=cfg.fltr_params,
         )
         feature_extractor()
 

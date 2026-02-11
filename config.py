@@ -51,8 +51,8 @@ create_dirs(
 cfg.fpath_patientInfo = cfg.dpath_csvRoot / 'patient_info.csv'
 cfg.fpath_segmParam = cfg.dpath_csvRoot / 'segmParams.csv'
 cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
-#cfg.fpath_coordlog = cfg.dpath_csvRoot / 'coordlog.csv'
-#cfg.fpath_wsiCoords = cfg.dpath_csvRoot / 'map_patchcoords.csv'
+cfg.fpath_encodingMap = cfg.dpath_csvRoot / 'encoding_map.csv'
+cfg.fpath_encodingPrgs = cfg.dpath_csvRoot / 'encoding_progress.csv'
 cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
 cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 
@@ -66,9 +66,9 @@ cfg.fltr_params = {
 # feauture extraction
 cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
 
-cfg.Xparam_batch_size = 512
-cfg.Xparam_patch_size = 224
-cfg.Xparam_no_auto_skip = False
+cfg.X_batch_size = 10 # best kept small for appropriate randomization, aka even bag size per slide
+cfg.X_patch_size = 224
+#cfg.Xparam_no_auto_skip = False
 
 cfg.tag = 'cSegm'
 cfg.hparam = {
