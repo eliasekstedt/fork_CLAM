@@ -15,41 +15,23 @@ from dataset_modules.dataset_h5 import Whole_Slide_Bag_FP, Dataset_All_Bags
 from utils.constants import MODEL2CONSTANTS
 from utils.transform_utils import get_eval_transforms
 
+def map_slide2patient(x, slide_id):
+    pattern = slide_id.split('_')[0]
+    return x.lstrip('patient_') == pattern
+
 class FeatureX:
     def __init__(
         self, dpath_qualityLog, dpath_wsiRoot, dpath_ptFeature, dpath_h5Feature,
-        fpath_segmlog, fpath_encodingPrgs, fpath_encodingMap, fpath_Xmodel, fpath_patientInfo,
-        batch_size, patch_size, fltr_params,
+        fpath_segmlog, fpath_encodingMap, fpath_Xmodel, fpath_patientInfo,
+        batch_size, patch_size, fltr_params, target_bag_size,
     ):
-        self.dpath_qualityLog = dpath_qualityLog
-        self.dpath_wsiRoot = dpath_wsiRoot
-        self.fpath_Xmodel = fpath_Xmodel
-        self.fpath_patientInfo = fpath_patientInfo
-        self.batch_size = batch_size
-        self.patch_size = patch_size
-
-        self.dpath_ptFeature = dpath_ptFeature
-        self.dpath_h5Feature = dpath_h5Feature
-        self.fpath_encodingPrgs = fpath_encodingPrgs
-        self.fpath_encodingMap = fpath_encodingMap
-
-        self.fpath_segmlog = fpath_segmlog
-        self.fltr_params = fltr_params
-        
-        
-        
-        
-        
-    
-    def __call__(self):
-        print('initializing dataset')
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        model = self.get_pbo_encoder(self.fpath_Xmodel)
+        model = self.get_pbo_encoder(fpath_Xmodel)
         constants = MODEL2CONSTANTS['pbo_subs']
         img_transforms = get_eval_transforms(
             mean=constants['mean'],
             std=constants['std'],
-            target_img_size=self.patch_size,
+            target_img_size=patch_size,
         )
         
         model.eval()
@@ -57,57 +39,47 @@ class FeatureX:
 
         loader_kwargs = {'num_workers': 0, 'pin_memory': True} if device.type == "cuda" else {}
 
-        if self.fpath_encodingPrgs.is_file():
-            slide_prgs = pd.read_csv(self.fpath_encodingPrgs)
-        else:
-            slide_prgs = pd.read_csv(self.fpath_segmlog)[['slide_id', 'handled']]
-            slide_prgs['handled'] = 0
-
-        if self.fpath_encodingMap.is_file():
-            encode_prgs = pd.read_csv(self.fpath_encodingMap)
+        if fpath_encodingMap.is_file():
+            encode_prgs = pd.read_csv(fpath_encodingMap)
         else:
             encode_prgs = None
 
-        patient_info = pd.read_csv(self.fpath_patientInfo)
-        for _, row in tqdm(slide_prgs.iterrows()):
-            slide_id = row['slide_id']
-            fpath_wsi = self.dpath_wsiRoot / f"patient_{slide_id}.mrxs"
+        patient_info = pd.read_csv(fpath_patientInfo)
+        slide_ids = pd.read_csv(fpath_segmlog)['slide_id'].unique().tolist()
 
-            if row['handled'] == 1:
-                print(f'already handled {slide_id}')
-                continue 
+        for slide_id in tqdm(slide_ids):
+            #slide_id = row['slide_id']
+            fpath_wsi = dpath_wsiRoot / f"patient_{slide_id}.mrxs"
 
-            #fpath_h5Feature = self.dpath_h5Feature / f"{slide_id}.h5"
-            fpath_qualityLog = self.dpath_qualityLog / f"{slide_id}.csv"
+            if encode_prgs is not None:
+                handled_slides = encode_prgs['slide_id'].unique().tolist()
+                if slide_id in handled_slides:
+                    print(f'already handled {slide_id}')
+                    continue 
+
+            fpath_qualityLog = dpath_qualityLog / f"{slide_id}.csv"
             wsi = openslide.open_slide(fpath_wsi)
             dataset = Whole_Slide_Bag_FP(
                 fpath_qualityLog=fpath_qualityLog,
                 wsi=wsi,
                 img_transforms=img_transforms,
-                fltr_params=self.fltr_params,
+                fltr_params=fltr_params,
             )
 
-            loader = DataLoader(dataset=dataset, batch_size=self.batch_size, **loader_kwargs)
-            fpaths_h5Feature = self.compute_w_loader(device, self.dpath_h5Feature, loader, model, slide_id)
+            loader = DataLoader(dataset=dataset, batch_size=batch_size, **loader_kwargs)
+            fpaths_h5Feature = self.compute_w_loader(device, dpath_h5Feature, loader, model, slide_id, target_bag_size)
 
             to_append = []
-            condition = patient_info['patient_n'].rstrip('patient_') == str(slide_id.split('_')[0])
-            isup = patient_info.loc[condition, 'isup']
+            condition = patient_info['patient_n'].apply(map_slide2patient, args=(slide_id,))
+            isup = patient_info.loc[condition, 'isup'].item()
             label = int(isup > 1)
-            age = patient_info.loc[condition, 'age']
-            psa = patient_info.loc[condition, 'psa']
+            age = patient_info.loc[condition, 'age'].item()
+            psa = patient_info.loc[condition, 'psa'].item()
             for fpath in fpaths_h5Feature:
-                bag_id = fpath.name.rstrip('.h5')
+                bag_id = fpath.name.removesuffix('.h5')
                 with h5py.File(fpath, "r") as file:
-                    features = file['features'][:]
-                    print('features size: ', features.shape)
-                    print('coordinates size: ', file['coords'].shape)
-
-                print(fpath, features.shape)
-                torch.save(
-                    torch.from_numpy(features),
-                    self.dpath_ptFeature / f"{bag_id}.pt",
-                )
+                    features = file['features']
+                    dim0, dim1 = features.shape
 
                 to_append.append({
                     'slide_id':slide_id,
@@ -116,26 +88,34 @@ class FeatureX:
                     'isup':isup,
                     'age':age,
                     'psa':psa,
+                    'dim0':dim0,
+                    'dim1':dim1,
                 })
 
-            encode_prgs_appendix = pd.DataFrame(to_append)
+            appendix = pd.DataFrame(to_append)
             if encode_prgs is None:
-                encode_prgs = encode_prgs
+                encode_prgs = appendix
             else:
-                encode_prgs = pd.concat([encode_prgs, encode_prgs_appendix], axis=0)
-            encode_prgs.to_csv(self.fpath_encodingMap, index=False)
+                encode_prgs = pd.concat([encode_prgs, appendix], axis=0)
+            encode_prgs.to_csv(fpath_encodingMap, index=False)
+        
+        self.convert_h52pt(dpath_ptFeature, fpaths_h5Feature)
+    
+    def convert_h52pt(self, dpath_ptFeature, fpath_h5Feature):
+        for fpath in fpath_h5Feature.iterdir():
+            bag_id = fpath.name.removesuffix('.h5')
+            with h5py.File(fpath, "r") as file:
+                features = file['features']
+                torch.save(
+                    torch.from_numpy(features),
+                    dpath_ptFeature / f"{bag_id}.pt",
+                )
 
-            slide_prgs.loc[slide_prgs['slide_id']==slide_id, 'handled'] = 1
-            slide_prgs.to_csv(self.fpath_encodingPrgs, index=False)
-            raise SystemExit
-
-    def compute_w_loader(self, device, dpath_h5Feature, loader, model, slide_id):
-        nr_patches = loader.dataset.map.shape[0]
-        nr_splits = max(len(loader.dataset) // 1000, 1)
+    def compute_w_loader(self, device, dpath_h5Feature, loader, model, slide_id, target_bag_size):
+        nr_splits = max(len(loader.dataset) // target_bag_size, 1)
         fpaths_h5Feature = [dpath_h5Feature / f"{slide_id}_{i}.h5" for i in range(nr_splits)]
-        print(nr_patches, nr_splits)
 
-        for data in tqdm(loader):
+        for data in loader:
             with torch.inference_mode():
 
                 batch = data['img']
@@ -155,7 +135,6 @@ class FeatureX:
                     attr_dict=None,
                     mode=['w', 'a'][fpath_h5Feature.is_file()]
                 )
-
         return fpaths_h5Feature
 
     def get_pbo_encoder(self, fpath_Xmodel):

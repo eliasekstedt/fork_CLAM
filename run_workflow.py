@@ -51,13 +51,13 @@ if __name__ == '__main__':
             dpath_ptFeature=cfg.dpath_ptFeature,
             dpath_h5Feature=cfg.dpath_h5Feature,
             fpath_segmlog=cfg.fpath_segmlog,
-            fpath_encodingPrgs=cfg.fpath_encodingPrgs,
             fpath_encodingMap=cfg.fpath_encodingMap,
             fpath_Xmodel=cfg.fpath_Xmodel,
             fpath_patientInfo=cfg.fpath_patientInfo,
             batch_size=cfg.X_batch_size,
             patch_size=cfg.X_patch_size,
             fltr_params=cfg.fltr_params,
+            target_bag_size=cfg.target_bag_size,
         )
         feature_extractor()
 

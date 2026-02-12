@@ -1,6 +1,6 @@
 
 import pandas as pd
-#import numpy as np
+import numpy as np
 from torch.utils.data import Dataset
 #import h5py
 
@@ -28,7 +28,7 @@ class Whole_Slide_Bag_FP(Dataset):
 
 	def __getitem__(self, idx):
 		row = self.map.iloc[idx]
-		coord = row['pos_x'], row['pos_y']
+		coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
 		img = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
 		img = self.roi_transforms(img)
 		return {'img': img, 'coord': coord}

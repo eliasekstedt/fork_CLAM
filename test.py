@@ -162,11 +162,24 @@ def test2():
     scatter_matrix(quality_stats, cfg.dpath_diagnostics)
     
 def test3():
-    import numpy as np
-    nr_splits = 7
-    fpaths = [f"p{i}" for i in range(nr_splits)]
-    size = 512
+    import pandas as pd
+    def map_slide2patient(x, slide_id):
+        pattern = slide_id.split('_')[0]
+        return x.lstrip('patient_') == pattern
+    
+    slide_id = '001_ABC'
+    patient_info = pd.read_csv(cfg.fpath_patientInfo)
+    condition = patient_info['patient_n'].apply(map_slide2patient, args=(slide_id,))
+    isup = patient_info.loc[condition, 'isup'].item()
+    label = int(isup > 1)
+    print(condition)
+    print(isup)
+    print(label)
 
+
+def test4():
+    print('xxx5.h5'.removesuffix('.h5'))
+    print('xxx5.h5'.rstrip('.h5'))
     
 
 
@@ -179,7 +192,8 @@ def test3():
 #test0()
 #test1()
 #test2()
-test3()
+#test3()
+test4()
 
 
 
