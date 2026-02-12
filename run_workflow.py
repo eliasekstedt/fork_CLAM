@@ -4,8 +4,8 @@ from config import *
 do_generate_coords = False
 do_qualVal = False
 do_patch_quality_check = False
-do_feature_extraction = True
-do_foldsplitting = False
+do_feature_extraction = False
+do_foldsplitting = True
 do_classifier_training = False
 
 if __name__ == '__main__':
@@ -59,23 +59,14 @@ if __name__ == '__main__':
             fltr_params=cfg.fltr_params,
             target_bag_size=cfg.target_bag_size,
         )
-        feature_extractor()
-
-
-
-
-
-
-
-
 
 
     if do_foldsplitting:
-        from pbo_map_generators import ClassifierMapGenerator
-        fold_splitter = ClassifierMapGenerator(
-            fpath_map_patchset=cfg.fpath_map_patchset,
-            fpath_map_fold_0=cfg.fpath_map_fold_0,
-            fpath_map_fold_1=cfg.fpath_map_fold_1,
+        from foldsplitter import FeatureMapSplitter
+        fold_splitter = FeatureMapSplitter(
+            fpath_map_patchset=cfg.fpath_encodingMap,
+            fpath_map_fold_0=cfg.fpath_fold0,
+            fpath_map_fold_1=cfg.fpath_fold1,
         )
 
     if do_classifier_training:

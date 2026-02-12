@@ -1,5 +1,4 @@
-import time
-import os
+
 import torch
 import torchvision
 from torch.utils.data import DataLoader
@@ -10,14 +9,41 @@ import numpy as np
 import pandas as pd
 
 from utils.file_utils import save_hdf5
-from dataset_modules.dataset_h5 import Whole_Slide_Bag_FP, Dataset_All_Bags
-#from models import get_encoder
+from torch.utils.data import Dataset
 from utils.constants import MODEL2CONSTANTS
 from utils.transform_utils import get_eval_transforms
 
 def map_slide2patient(x, slide_id):
     pattern = slide_id.split('_')[0]
     return x.lstrip('patient_') == pattern
+
+class WSI2BagsReader(Dataset):
+	def __init__(self, fpath_qualityLog, wsi, img_transforms, fltr_params):
+		self.map = self.apply_filter(fpath_qualityLog, fltr_params)
+		self.patch_lvl = self.map['patch_lvl'].unique().item()
+		self.patch_size = self.map['patch_size'].unique().item()
+		self.wsi = wsi
+		self.roi_transforms = img_transforms
+
+	def apply_filter(self, fpath_qualityLog, fltr_params):
+		qlog = pd.read_csv(fpath_qualityLog)
+		qlog = qlog[qlog['on_bg'] >= fltr_params['ll_bg']]
+		qlog = qlog[qlog['on_blur'] >= fltr_params['ll_blur']]
+		qlog = qlog[qlog['on_dist'] >= fltr_params['ll_dist']]
+		qlog = qlog[qlog['on_dist'] <= fltr_params['ul_dist']]
+		qlog = qlog.sample(frac=1) # important for random origin of patch on slide distribution into bags
+		return qlog
+			
+	def __len__(self):
+		return self.map.shape[0]
+
+	def __getitem__(self, idx):
+		row = self.map.iloc[idx]
+		coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
+		img = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
+		img = self.roi_transforms(img)
+		return {'img': img, 'coord': coord}
+
 
 class FeatureX:
     def __init__(
@@ -48,7 +74,6 @@ class FeatureX:
         slide_ids = pd.read_csv(fpath_segmlog)['slide_id'].unique().tolist()
 
         for slide_id in tqdm(slide_ids):
-            #slide_id = row['slide_id']
             fpath_wsi = dpath_wsiRoot / f"patient_{slide_id}.mrxs"
 
             if encode_prgs is not None:
@@ -59,7 +84,7 @@ class FeatureX:
 
             fpath_qualityLog = dpath_qualityLog / f"{slide_id}.csv"
             wsi = openslide.open_slide(fpath_wsi)
-            dataset = Whole_Slide_Bag_FP(
+            dataset = WSI2BagsReader(
                 fpath_qualityLog=fpath_qualityLog,
                 wsi=wsi,
                 img_transforms=img_transforms,
@@ -99,13 +124,14 @@ class FeatureX:
                 encode_prgs = pd.concat([encode_prgs, appendix], axis=0)
             encode_prgs.to_csv(fpath_encodingMap, index=False)
         
-        self.convert_h52pt(dpath_ptFeature, fpaths_h5Feature)
+        self.convert_h52pt(dpath_ptFeature, dpath_h5Feature)
     
-    def convert_h52pt(self, dpath_ptFeature, fpath_h5Feature):
-        for fpath in fpath_h5Feature.iterdir():
+    def convert_h52pt(self, dpath_ptFeature, dpath_h5Feature):
+        fpaths = list(dpath_h5Feature.iterdir())
+        for fpath in tqdm(fpaths):
             bag_id = fpath.name.removesuffix('.h5')
             with h5py.File(fpath, "r") as file:
-                features = file['features']
+                features = file['features'][:]
                 torch.save(
                     torch.from_numpy(features),
                     dpath_ptFeature / f"{bag_id}.pt",
