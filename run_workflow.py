@@ -2,9 +2,9 @@
 from config import *
 
 do_generate_coords = False
-do_qualVal = True
+do_qualVal = False
 do_patch_quality_check = False
-do_feature_extraction = False
+do_feature_extraction = True
 do_foldsplitting = False
 do_mil = False
 
@@ -32,13 +32,16 @@ if __name__ == '__main__':
         )
 
     if do_patch_quality_check:
-        from patch_quality_check import QDock
-        QDock(
+        from patch_quality_check import QualityVisualizer
+        QualityVisualizer(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
             dpath_wsiCoords=cfg.dpath_wsiCoords,
             dpath_qualityLog=cfg.dpath_qualityLog,
-            dpath_diagnostics=cfg.dpath_diagnostics,
             fltr_params=cfg.fltr_params,
+            dpath_geometryCheck=cfg.dpath_geometryCheck,
+            dpath_keepVreject=cfg.dpath_keepVreject,
+            fpath_patchProperties=cfg.fpath_patchProperties,
+            fpath_perSlideInfo=cfg.fpath_perSlideInfo,
         )
 
     if do_feature_extraction:

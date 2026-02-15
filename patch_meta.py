@@ -120,7 +120,11 @@ class MetaAssigner:
         df['slide_id'] = slide_id
         df['patch_lvl'] = patch_level
         df['patch_size'] = patch_size
-        df = df[['slide_id', 'pos_x', 'pos_y', 'blur', 'bg', 'patch_lvl', 'patch_size']]
+        df = df[[
+            'slide_id', 'pos_x', 'pos_y', 'blur', 'bg',
+            'patch_lvl', 'patch_size', 'pix_sum',
+            'pix_sq_sum', 'n_pixls',
+        ]]
         df.to_csv(fpath_qualityLog, index=False)
     
 class MetaLooper:

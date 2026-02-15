@@ -18,29 +18,37 @@ def map_slide2patient(x, slide_id):
     return x.lstrip('patient_') == pattern
 
 class WSI2BagsReader(Dataset):
-	def __init__(self, fpath_qualityLog, wsi, img_transforms, fltr_params):
-		self.map = self.apply_filter(fpath_qualityLog, fltr_params)
-		self.patch_lvl = self.map['patch_lvl'].unique().item()
-		self.patch_size = self.map['patch_size'].unique().item()
-		self.wsi = wsi
-		self.roi_transforms = img_transforms
+    def __init__(self, fpath_qualityLog, wsi, img_transforms, fltr_params):
+        self.map = self.apply_filter(fpath_qualityLog, fltr_params)
+        self.patch_lvl = self.map['patch_lvl'].unique().item()
+        self.patch_size = self.map['patch_size'].unique().item()
+        self.wsi = wsi
+        self.roi_transforms = img_transforms
 
-	def apply_filter(self, fpath_qualityLog, fltr_params):
-		qlog = pd.read_csv(fpath_qualityLog)
-		qlog = qlog[qlog['on_bg'] >= fltr_params['ll_bg']]
-		qlog = qlog[qlog['on_blur'] >= fltr_params['ll_blur']]
-		qlog = qlog.sample(frac=1) # important for random origin of patch on slide distribution into bags
-		return qlog
-			
-	def __len__(self):
-		return self.map.shape[0]
+    def apply_filter(self, fpath_qualityLog, fltr_params):
+        qlog = pd.read_csv(fpath_qualityLog)
+        qlog = qlog[qlog['bg'] <= fltr_params['bg']]
+        qlog = qlog[qlog['blur'] >= fltr_params['blur']]
+        qlog = qlog.sample(frac=1) # important for random origin of patch on slide distribution into bags
+        return qlog
+            
+    def __len__(self):
+        return self.map.shape[0]
 
-	def __getitem__(self, idx):
-		row = self.map.iloc[idx]
-		coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
-		img = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
-		img = self.roi_transforms(img)
-		return {'img': img, 'coord': coord}
+    def __getitem__(self, idx):
+        row = self.map.iloc[idx]
+        coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
+        patch = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
+        
+        #print(self.map)
+        #raise SystemExit
+        #import matplotlib.pyplot as plt
+        #plt.imshow(patch)
+        #plt.tight_layout()
+        #plt.show()
+        
+        patch = self.roi_transforms(patch)
+        return {'patch': patch, 'coord': coord}
 
 
 class FeatureX:
@@ -142,7 +150,7 @@ class FeatureX:
         for data in loader:
             with torch.inference_mode():
 
-                batch = data['img']
+                batch = data['patch']
                 coords = data['coord']
 
                 coords = np.array(coords, dtype=np.int32)

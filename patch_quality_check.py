@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import openslide
 import h5py
 from PIL import Image
+#from tqdm import tqdm
 
 """
 questions to answer:
@@ -14,38 +15,41 @@ questions to answer:
 * among wsi, are there any outliers in terms of the values in filtering criteria or total nr patches?
 """
 
-class QDock:
+class QualityVisualizer:
     def __init__(self, dpath_wsiRoot, dpath_wsiCoords, dpath_qualityLog,
-        dpath_diagnostics, fltr_params,
+        fltr_params, dpath_geometryCheck, dpath_keepVreject,
+        fpath_patchProperties, fpath_perSlideInfo, 
     ):
         #fpaths_qlog = dpath_qualityLog.iterdir()
         self.check_extraction_geometry(
             dpath_wsiRoot=dpath_wsiRoot,
             dpath_wsiCoords=dpath_wsiCoords,
             fpaths_qlog=list(dpath_qualityLog.iterdir()),
-            dpath_diagnostics=dpath_diagnostics,
+            dpath_geometryCheck=dpath_geometryCheck,
         )
         self.get_per_slide_info(
             fpaths_qlog=list(dpath_qualityLog.iterdir()),
-            dpath_diagnostics=dpath_diagnostics,
-            ll_bg=fltr_params['ll_bg'],
-            ll_blur=fltr_params['ll_blur'],
+            fltr_bg=fltr_params['bg'],
+            fltr_blur=fltr_params['blur'],
+            fpath_patchProperties=fpath_patchProperties,
+            fpath_perSlideInfo=fpath_perSlideInfo,
         )
 
         self.vis_keep_v_reject(
             dpath_wsiRoot=dpath_wsiRoot,
             dpath_wsiCoords=dpath_wsiCoords,
             fpaths_qlog=list(dpath_qualityLog.iterdir()),
-            dpath_diagnostics=dpath_diagnostics,
-            ll_bg=fltr_params['ll_bg'],
-            ll_blur=fltr_params['ll_blur'],
+            fltr_bg=fltr_params['bg'],
+            fltr_blur=fltr_params['blur'],
+            dpath_keepVreject=dpath_keepVreject,
         )
 
-    def vis_keep_v_reject(self, dpath_wsiRoot, dpath_wsiCoords,
-        fpaths_qlog, dpath_diagnostics, ll_bg, ll_blur,
+    def vis_keep_v_reject(self,
+        dpath_wsiRoot, dpath_wsiCoords, fpaths_qlog,
+        fltr_bg, fltr_blur, dpath_keepVreject,
     ):
         def build_assem(wsi, df, patch_lvl, patch_size, row_units=5):
-            assem, assem_row, blank = None, None, None
+            assem, assem_row = None, None
             for _, row in df.iterrows():
                 pos = row['pos_x'], row['pos_y']
                 patch = self.read_patch(wsi, pos, patch_lvl, patch_size)
@@ -74,8 +78,8 @@ class QDock:
 
             qlog = pd.read_csv(fpath_qlog)
             rejects = qlog[
-                (qlog['on_bg'] < ll_bg) |
-                (qlog['on_blur'] < ll_blur)
+                (qlog['bg'] > fltr_bg) |
+                (qlog['blur'] < fltr_blur)
             ].sample(frac=1)
             reject_assem = build_assem(wsi, rejects, patch_lvl, patch_size)
 
@@ -83,7 +87,7 @@ class QDock:
             keep_assem = build_assem(wsi, keep, patch_lvl, patch_size)
             div = np.zeros_like(keep_assem[:, :int(keep_assem.shape[1]*0.01), :])
             assem = np.concatenate([keep_assem, div, reject_assem], axis=1)
-            Image.fromarray(assem).save(dpath_diagnostics / f'qdock_keep_v_reject_{slide_id}.png')
+            Image.fromarray(assem).save(dpath_keepVreject / f'{slide_id}.png')
 
     def read_patch(self, wsi, pos, patch_level, patch_size):
         return np.array(wsi.read_region(pos, patch_level, (patch_size, patch_size)).convert('RGB'))
@@ -95,7 +99,10 @@ class QDock:
             patch_size = file['coords'].attrs['patch_size']
         return patch_lvl, patch_size, coords
         
-    def check_extraction_geometry(self, dpath_wsiRoot, dpath_wsiCoords, fpaths_qlog, dpath_diagnostics):
+    def check_extraction_geometry(self,
+        dpath_wsiRoot, dpath_wsiCoords,
+        dpath_geometryCheck, fpaths_qlog,
+    ):
         def build_assem(which_x, which_y, qlog, wsi, patch_level, patch_size):
             blank = np.zeros_like(self.read_patch(
                 pos=(which_x[len(which_x) // 2], which_y[len(which_y) // 2]),
@@ -149,14 +156,16 @@ class QDock:
             wsi = openslide.open_slide(dpath_wsiRoot / f"patient_{slide_id}.mrxs")
             assem = build_assem(which_x, which_y, qlog, wsi, patch_lvl, patch_size)
 
-            Image.fromarray(assem.astype(np.uint8)).save(dpath_diagnostics / f'qdock_geoCheck_{slide_id}.png')
+            Image.fromarray(assem.astype(np.uint8)).save(dpath_geometryCheck / f'{slide_id}.png')
         
-    def get_per_slide_info(self, fpaths_qlog, dpath_diagnostics, ll_bg, ll_blur):
-        def gen_scatter_matrix(df, dpath_diagnostics):
-            plotcols = ['on_bg', 'on_blur', 'n_tot']
+    def get_per_slide_info(self, fpaths_qlog, fltr_bg, fltr_blur,
+        fpath_patchProperties, fpath_perSlideInfo,
+    ):
+        def gen_scatter_matrix(df, fpath_patchProperties):
+            plotcols = ['bg', 'blur', 'n_tot']
             sns.pairplot(df[plotcols], plot_kws={'s': 10, 'alpha':0.5})
             plt.tight_layout()
-            plt.savefig(dpath_diagnostics / 'qdock_scatter_matrix.png')
+            plt.savefig(fpath_patchProperties)
 
         per_slide_info = []
         for fpath in fpaths_qlog:
@@ -164,15 +173,15 @@ class QDock:
             ntot = qlog.shape[0]
             per_slide_info.append({
                 'slide_id':fpath.name.rstrip('.csv'),
-                'on_bg':qlog['on_bg'].mean().item(),
-                'on_blur':qlog['on_blur'].mean().item(),
-                'bg_reject_rate':np.sum(qlog['on_bg'] < ll_bg) / ntot,
-                'blur_reject_rate':np.sum(qlog['on_blur'] < ll_blur) / ntot,
+                'bg':qlog['bg'].mean().item(),
+                'blur':qlog['blur'].mean().item(),
+                'bg_reject_rate':np.sum(qlog['bg'] > fltr_bg) / ntot,
+                'blur_reject_rate':np.sum(qlog['blur'] < fltr_blur) / ntot,
                 'n_tot':ntot,
             })
             
         per_slide_info = pd.DataFrame(per_slide_info)
-        gen_scatter_matrix(per_slide_info, dpath_diagnostics)
-        per_slide_info.to_csv(dpath_diagnostics / 'per_slide_info.csv', index=False)
+        gen_scatter_matrix(per_slide_info, fpath_patchProperties)
+        per_slide_info.to_csv(fpath_perSlideInfo, index=False)
         return per_slide_info
         

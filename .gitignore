@@ -3,6 +3,7 @@ __pycache__/
 notebooks
 data/
 data_using_normalization/
+**/archived_mask/
 **/_rejects/
 **/quality_log/
 **/_diagnostics/

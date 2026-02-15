@@ -28,7 +28,11 @@ cfg.dpath_featureRoot = cfg.dpath_dataRoot / '1_featureRoot'
 cfg.dpath_ptFeature = cfg.dpath_featureRoot / 'ptFeature'
 cfg.dpath_h5Feature = cfg.dpath_featureRoot / 'h5Feature'
 
-cfg.dpath_diagnostics = cfg.dpath_dataRoot / 'diagnostics'
+cfg.dpath_diagnosticsRoot = Path('diagnostics')
+cfg.dpath_patchControl = cfg.dpath_diagnosticsRoot / 'patch_control'
+cfg.dpath_geometryCheck = cfg.dpath_patchControl / 'geometry_check'
+cfg.dpath_keepVreject = cfg.dpath_patchControl / 'keepVreject'
+
 
 create_dirs(
     cfg.dpath_csvRoot,
@@ -42,13 +46,18 @@ create_dirs(
     cfg.dpath_ptFeature,
     cfg.dpath_h5Feature,
     cfg.dpath_milFolds,
-    cfg.dpath_diagnostics,
+    cfg.dpath_diagnosticsRoot,
+    cfg.dpath_patchControl,
+    cfg.dpath_geometryCheck,
+    cfg.dpath_keepVreject,
 )
 
 cfg.fpath_patientInfo = cfg.dpath_csvRoot / 'patient_info.csv'
 cfg.fpath_segmParam = cfg.dpath_csvRoot / 'segmParams.csv'
 cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
 cfg.fpath_encodingMap = cfg.dpath_csvRoot / 'encoding_map.csv'
+cfg.fpath_patchProperties = cfg.dpath_patchControl / 'patchProperties.png'
+cfg.fpath_perSlideInfo = cfg.dpath_patchControl / 'per_slide_info.csv'
 cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
 cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 
