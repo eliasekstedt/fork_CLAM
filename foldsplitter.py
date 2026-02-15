@@ -3,18 +3,18 @@ import numpy as np
 import pandas as pd
 
 class FeatureMapSplitter:
-    def __init__(self, fpath_map_patchset, fpath_map_fold_0, fpath_map_fold_1):
+    def __init__(self, fpath_encodingMap, fpath_fold0, fpath_fold1):
         print("plugged leak")
-        mmap = pd.read_csv(fpath_map_patchset)
+        mmap = pd.read_csv(fpath_encodingMap)
         mmap['case_id'] = mmap['slide_id'].apply(self.get_case_id)
         fold_0, fold_1 = self.split_kfold(mmap)
-        fold_0.to_csv(fpath_map_fold_0, index=False)
-        fold_1.to_csv(fpath_map_fold_1, index=False)
+        fold_0.to_csv(fpath_fold0, index=False)
+        fold_1.to_csv(fpath_fold1, index=False)
         fold_0_label_0_ratio = 1 - (fold_0['label'].sum() / fold_0.shape[0])
         print(f"label 0 ratio: {fold_0_label_0_ratio}")
 
-    def get_case_id(self, patchset_id):
-        return re.match(r"(patient_[^_]+)", patchset_id).group(1)
+    def get_case_id(self, slide_id):
+        return re.match(r"([^_]+)", slide_id).group(1)
     
     def split_kfold(self, mmap, k=5):
         def score_fold(fold, dcol_names):

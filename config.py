@@ -28,8 +28,6 @@ cfg.dpath_featureRoot = cfg.dpath_dataRoot / '1_featureRoot'
 cfg.dpath_ptFeature = cfg.dpath_featureRoot / 'ptFeature'
 cfg.dpath_h5Feature = cfg.dpath_featureRoot / 'h5Feature'
 
-cfg.dpath_milRoot = cfg.dpath_dataRoot / '2_milRoot'
-
 cfg.dpath_diagnostics = cfg.dpath_dataRoot / 'diagnostics'
 
 create_dirs(
@@ -43,7 +41,6 @@ create_dirs(
     cfg.dpath_featureRoot,
     cfg.dpath_ptFeature,
     cfg.dpath_h5Feature,
-    cfg.dpath_milRoot,
     cfg.dpath_milFolds,
     cfg.dpath_diagnostics,
 )
@@ -56,10 +53,8 @@ cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
 cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 
 cfg.fltr_params = {
-    'll_bg':0.5,
-    'll_blur':40,
-    'll_dist':30,
-    'ul_dist':200,
+    'bg':0.5,
+    'blur':40,
 }
 
 # feauture extraction
@@ -68,15 +63,15 @@ cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
 cfg.X_batch_size = 10 # best kept small for appropriate randomization, aka even bag size per slide
 cfg.X_patch_size = 224
 cfg.target_bag_size = 2500
-#cfg.Xparam_no_auto_skip = False
 
-cfg.tag = 'cSegm'
+
+cfg.tag = 'cSegm_noFltr'
 cfg.hparam = {
     'dropout': 0.0,
     'batch_size':1,
-    'learning_rate':0.1,
+    'learning_rate':0.01,
     'weight_decay':1e-6,
-    'nr_epochs':120,
+    'nr_epochs':240,
 }
 
 cfg.state_dict = ''

@@ -180,20 +180,59 @@ def test3():
 def test4():
     print('xxx5.h5'.removesuffix('.h5'))
     print('xxx5.h5'.rstrip('.h5'))
+
+def test5():
+    import pandas as pd
+    f0 = pd.read_csv(cfg.fpath_fold0)
+    l0 = f0[f0['label'] == 0]
+    l1 = f0[f0['label'] == 1]
+    l0 = l0.sample(frac=1)
+    l0 = l0.iloc[:l1.shape[0]]
+    print(f0)
+    print(f0['label'].mean())
+    f0 = pd.concat([l0, l1], axis=0)
+    f0 = f0.sample(frac=1)
+    print(f0['label'].mean())
+    print(f0)
+    #f0.to_csv(cfg.fpath_fold0)
+
+
+def test6():
+    pass
+
+def test7():
+    pass
+
+def test8():
+    pass
+
+def test9():
+    pass
+
+def testA():
+    pass
+
+def testB():
+    pass
+
+
+
     
 
 
 
-        
 
-    
+testB()
+testA()
+test9()
+test8()
+test7()
+test6()
+test5()
+raise SystemExit
 
-
-#test0()
-#test1()
-#test2()
-#test3()
 test4()
-
-
-
+test3()
+test2()
+test1()
+test0()

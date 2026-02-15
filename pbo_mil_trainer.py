@@ -44,14 +44,14 @@ class MILReader(Dataset):
     
     def __getitem__(self, idx):
         row = self.map.iloc[idx]
-        slide_id = row['slide_id']
-        fpath_raw_features = os.path.join(self.dpath_features_pt, f"{slide_id}.pt")
+        bag_id = row['bag_id']
+        fpath_raw_features = os.path.join(self.dpath_features_pt, f"{bag_id}.pt")
         features = torch.load(fpath_raw_features)
         label = torch.tensor(row['label'].item(), dtype=torch.long)
         if self.mode == 'train':
             return features, label
         else:
-            return slide_id, features, label
+            return bag_id, features, label
 
 class MILTrainer:
     def __init__(self, model, lr, lf_weights, weight_decay, train_ap, val_ap, device):
@@ -172,14 +172,13 @@ def record_history(path_model):
 
 
 class MilTrainWrapper:
-    def __init__(self, dpath_features_pt, fpath_map_fold_0,
-        fpath_map_fold_1, hparam, fpath_state_dict, augm, tag, device
+    def __init__(self, dpath_ptFeature, fpath_fold0,
+        fpath_fold1, hparam, fpath_state_dict, tag, device
     ):
-
         loader_0, loader_1 = self.init_loaders(
-            dpath_features_pt=dpath_features_pt,
-            fpath_map_fold_0=fpath_map_fold_0,
-            fpath_map_fold_1=fpath_map_fold_1,
+            dpath_features_pt=dpath_ptFeature,
+            fpath_map_fold_0=fpath_fold0,
+            fpath_map_fold_1=fpath_fold1,
             batch_size=hparam['batch_size'],
         )
 
@@ -199,7 +198,7 @@ class MilTrainWrapper:
             'ap_train/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}",
         }
         
-        runpath = self.init_run(hparam, augm, logmore, tag, device)
+        runpath = self.init_run(hparam, logmore, tag, device)
         model = self.init_model(runpath, fpath_state_dict, hparam['dropout'], device)
         trainer = self.learn_parameters(
             runpath=runpath,
@@ -227,7 +226,7 @@ class MilTrainWrapper:
         loader_1 = DataLoader(reader_1, batch_size, shuffle=True)
         return loader_0, loader_1
 
-    def init_run(self, hparam, augmentation, logmore, tag, device):
+    def init_run(self, hparam, logmore, tag, device):
         current = datetime.now()
         runpath = f'run/{tag}/{str(current)[8:10]}_{str(current)[11:13]}_{str(current)[14:16]}_{str(current)[17:19]}/'
         # create dir for run history if none exists
@@ -240,14 +239,8 @@ class MilTrainWrapper:
         with open(os.path.join(runpath, 'log.txt'), 'a') as file:
             file.write('################# initiating run #################\n')
             file.write(f'run dir has been created in {runpath}\n\n')
-            for key, val in {**hparam, **augmentation, **logmore}.items():
+            for key, val in {**hparam, **logmore}.items():
                 file.write(f'{key}\t: {val}\n')
-            """
-            for param in hparam:
-                file.write(f'{param}\t: {hparam[param]}\n')
-            for aug in augmentation:
-                file.write(f'{aug}\t: {augmentation[aug]}\n')
-            """
             file.write('\n')
             file.write(f'Using {device} device\n')
             file.write('################# initiated run ##################\n')

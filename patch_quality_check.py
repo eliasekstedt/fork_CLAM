@@ -25,13 +25,11 @@ class QDock:
             fpaths_qlog=list(dpath_qualityLog.iterdir()),
             dpath_diagnostics=dpath_diagnostics,
         )
-        per_slide_info = self.get_per_slide_info(
+        self.get_per_slide_info(
             fpaths_qlog=list(dpath_qualityLog.iterdir()),
             dpath_diagnostics=dpath_diagnostics,
             ll_bg=fltr_params['ll_bg'],
             ll_blur=fltr_params['ll_blur'],
-            ll_dist=fltr_params['ll_dist'],
-            ul_dist=fltr_params['ul_dist'],
         )
 
         self.vis_keep_v_reject(
@@ -41,12 +39,10 @@ class QDock:
             dpath_diagnostics=dpath_diagnostics,
             ll_bg=fltr_params['ll_bg'],
             ll_blur=fltr_params['ll_blur'],
-            ll_dist=fltr_params['ll_dist'],
-            ul_dist=fltr_params['ul_dist'],
         )
 
     def vis_keep_v_reject(self, dpath_wsiRoot, dpath_wsiCoords,
-        fpaths_qlog, dpath_diagnostics, ll_bg, ll_blur, ll_dist, ul_dist,
+        fpaths_qlog, dpath_diagnostics, ll_bg, ll_blur,
     ):
         def build_assem(wsi, df, patch_lvl, patch_size, row_units=5):
             assem, assem_row, blank = None, None, None
@@ -79,9 +75,7 @@ class QDock:
             qlog = pd.read_csv(fpath_qlog)
             rejects = qlog[
                 (qlog['on_bg'] < ll_bg) |
-                (qlog['on_blur'] < ll_blur) |
-                (qlog['on_dist'] < ll_dist) |
-                (qlog['on_dist'] > ul_dist)
+                (qlog['on_blur'] < ll_blur)
             ].sample(frac=1)
             reject_assem = build_assem(wsi, rejects, patch_lvl, patch_size)
 
@@ -157,9 +151,9 @@ class QDock:
 
             Image.fromarray(assem.astype(np.uint8)).save(dpath_diagnostics / f'qdock_geoCheck_{slide_id}.png')
         
-    def get_per_slide_info(self, fpaths_qlog, dpath_diagnostics, ll_bg, ll_blur, ll_dist, ul_dist):
+    def get_per_slide_info(self, fpaths_qlog, dpath_diagnostics, ll_bg, ll_blur):
         def gen_scatter_matrix(df, dpath_diagnostics):
-            plotcols = ['on_bg', 'on_blur', 'on_dist', 'n_tot']
+            plotcols = ['on_bg', 'on_blur', 'n_tot']
             sns.pairplot(df[plotcols], plot_kws={'s': 10, 'alpha':0.5})
             plt.tight_layout()
             plt.savefig(dpath_diagnostics / 'qdock_scatter_matrix.png')
@@ -172,11 +166,8 @@ class QDock:
                 'slide_id':fpath.name.rstrip('.csv'),
                 'on_bg':qlog['on_bg'].mean().item(),
                 'on_blur':qlog['on_blur'].mean().item(),
-                'on_dist':qlog['on_dist'].mean().item(),
                 'bg_reject_rate':np.sum(qlog['on_bg'] < ll_bg) / ntot,
                 'blur_reject_rate':np.sum(qlog['on_blur'] < ll_blur) / ntot,
-                'ldist_reject_rate':np.sum(qlog['on_dist'] < ll_dist) / ntot,
-                'udist_reject_rate':np.sum(qlog['on_dist'] > ul_dist) / ntot,
                 'n_tot':ntot,
             })
             

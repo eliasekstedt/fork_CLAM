@@ -2,15 +2,14 @@
 from config import *
 
 do_generate_coords = False
-do_qualVal = False
+do_qualVal = True
 do_patch_quality_check = False
 do_feature_extraction = False
-do_foldsplitting = True
-do_classifier_training = False
+do_foldsplitting = False
+do_mil = False
 
 if __name__ == '__main__':
     if do_generate_coords:
-        from config import *
         from find_coords import CoordGenerator
         cw = CoordGenerator(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
@@ -24,8 +23,8 @@ if __name__ == '__main__':
         cw()
 
     if do_qualVal:
-        from quality_measure import QALooper
-        QALooper(
+        from patch_meta import MetaLooper
+        MetaLooper(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
             dpath_qualityLog=cfg.dpath_qualityLog,
             dpath_wsiCoords=cfg.dpath_wsiCoords,
@@ -42,10 +41,9 @@ if __name__ == '__main__':
             fltr_params=cfg.fltr_params,
         )
 
-
     if do_feature_extraction:
         from encode_patches import FeatureX
-        feature_extractor = FeatureX(
+        FeatureX(
             dpath_qualityLog=cfg.dpath_qualityLog,
             dpath_wsiRoot=cfg.dpath_wsiRoot,
             dpath_ptFeature=cfg.dpath_ptFeature,
@@ -60,16 +58,15 @@ if __name__ == '__main__':
             target_bag_size=cfg.target_bag_size,
         )
 
-
     if do_foldsplitting:
         from foldsplitter import FeatureMapSplitter
-        fold_splitter = FeatureMapSplitter(
-            fpath_map_patchset=cfg.fpath_encodingMap,
-            fpath_map_fold_0=cfg.fpath_fold0,
-            fpath_map_fold_1=cfg.fpath_fold1,
+        FeatureMapSplitter(
+            fpath_encodingMap=cfg.fpath_encodingMap,
+            fpath_fold0=cfg.fpath_fold0,
+            fpath_fold1=cfg.fpath_fold1,
         )
 
-    if do_classifier_training:
+    if do_mil:
         from pbo_mil_trainer import MilTrainWrapper
         """
         why does the train epoch factor in instance loss in loss calculation but not val epoch?
@@ -82,13 +79,12 @@ if __name__ == '__main__':
         else:
             fpath_state_dict = cfg.state_dict
 
-        wrapper = MilTrainWrapper(
-            dpath_features_pt=cfg.dpath_features_pt,
-            fpath_map_fold_0=cfg.fpath_map_fold_0,
-            fpath_map_fold_1=cfg.fpath_map_fold_1,
+        MilTrainWrapper(
+            dpath_ptFeature=cfg.dpath_ptFeature,
+            fpath_fold0=cfg.fpath_fold0,
+            fpath_fold1=cfg.fpath_fold1,
             hparam=cfg.hparam,
             fpath_state_dict=fpath_state_dict,
-            augm=cfg.augm,
             tag=cfg.tag,
             device='cuda:0',
         )

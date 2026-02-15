@@ -18,8 +18,6 @@ class Whole_Slide_Bag_FP(Dataset):
 		qlog = pd.read_csv(fpath_qualityLog)
 		qlog = qlog[qlog['on_bg'] >= fltr_params['ll_bg']]
 		qlog = qlog[qlog['on_blur'] >= fltr_params['ll_blur']]
-		qlog = qlog[qlog['on_dist'] >= fltr_params['ll_dist']]
-		qlog = qlog[qlog['on_dist'] <= fltr_params['ul_dist']]
 		qlog = qlog.sample(frac=1) # important for random origin of patch on slide distribution into bags
 		return qlog
 			
