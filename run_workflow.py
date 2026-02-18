@@ -4,9 +4,9 @@ from config import *
 do_generate_coords = False
 do_qualVal = False
 do_patch_quality_check = False
-do_feature_extraction = True
+do_feature_extraction = False
 do_foldsplitting = False
-do_mil = False
+do_mil = True
 
 if __name__ == '__main__':
     if do_generate_coords:
@@ -82,13 +82,15 @@ if __name__ == '__main__':
         else:
             fpath_state_dict = cfg.state_dict
 
-        MilTrainWrapper(
-            dpath_ptFeature=cfg.dpath_ptFeature,
-            fpath_fold0=cfg.fpath_fold0,
-            fpath_fold1=cfg.fpath_fold1,
-            hparam=cfg.hparam,
-            fpath_state_dict=fpath_state_dict,
-            tag=cfg.tag,
-            device='cuda:0',
-        )
+        for wd in [i * 1e-3 for i in range(1, 12)]:
+            cfg.hparam['weight_decay'] = wd
+            MilTrainWrapper(
+                dpath_ptFeature=cfg.dpath_ptFeature,
+                fpath_fold0=cfg.fpath_fold0,
+                fpath_fold1=cfg.fpath_fold1,
+                hparam=cfg.hparam,
+                fpath_state_dict=fpath_state_dict,
+                tag=cfg.tag,
+                device='cuda:0',
+            )
 

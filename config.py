@@ -74,13 +74,13 @@ cfg.X_patch_size = 224
 cfg.target_bag_size = 2500
 
 
-cfg.tag = 'cSegm_noFltr'
+cfg.tag = 'wd_zoom'
 cfg.hparam = {
-    'dropout': 0.0,
+    'dropout': 0.25,
     'batch_size':1,
-    'learning_rate':0.01,
-    'weight_decay':1e-6,
-    'nr_epochs':240,
+    'learning_rate':0.001,
+    'weight_decay':1e-4,
+    'nr_epochs':300,
 }
 
 cfg.state_dict = ''

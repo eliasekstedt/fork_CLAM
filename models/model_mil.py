@@ -1,3 +1,5 @@
+
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -63,5 +65,6 @@ class MIL_fc_mc(nn.Module):
             results_dict.update({'features': top_features})
         return top_instance, Y_prob, Y_hat, y_probs, results_dict
 
+"""
 
         

@@ -1,7 +1,7 @@
 
 from config import *
 
-def test0():
+def testA():
     import pandas as pd
     import re
     import numpy as np
@@ -112,7 +112,7 @@ def test0():
     )
 
 
-def test1():
+def testB():
     import pandas as pd
     import numpy as np
     from tqdm import tqdm
@@ -135,7 +135,7 @@ def test1():
         assert np.array_equal(ori, mod)
         qlog.to_csv(fpath, index=False)
         
-def test2():
+def testC():
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -161,7 +161,7 @@ def test2():
     print(quality_stats)
     scatter_matrix(quality_stats, cfg.dpath_diagnostics)
     
-def test3():
+def testD():
     import pandas as pd
     def map_slide2patient(x, slide_id):
         pattern = slide_id.split('_')[0]
@@ -177,11 +177,11 @@ def test3():
     print(label)
 
 
-def test4():
+def testE():
     print('xxx5.h5'.removesuffix('.h5'))
     print('xxx5.h5'.rstrip('.h5'))
 
-def test5():
+def testF():
     import pandas as pd
     f0 = pd.read_csv(cfg.fpath_fold0)
     l0 = f0[f0['label'] == 0]
@@ -194,25 +194,25 @@ def test5():
     f0 = f0.sample(frac=1)
     print(f0['label'].mean())
     print(f0)
-    #f0.to_csv(cfg.fpath_fold0)
+    f0.to_csv(cfg.fpath_fold0)
 
 
-def test6():
+def testG():
     pass
 
-def test7():
+def testH():
     pass
 
-def test8():
+def testI():
     pass
 
-def test9():
+def testJ():
     pass
 
-def testA():
+def testK():
     pass
 
-def testB():
+def testL():
     pass
 
 
@@ -222,17 +222,18 @@ def testB():
 
 
 
-testB()
-testA()
-test9()
-test8()
-test7()
-test6()
-test5()
-raise SystemExit
+testF()
+testG()
+testH()
+testI()
+testJ()
+testK()
+testL()
 
-test4()
-test3()
-test2()
-test1()
-test0()
+raise SystemExit
+testA()
+testB()
+testC()
+testD()
+testE()
+

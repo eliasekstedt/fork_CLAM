@@ -1,7 +1,7 @@
 
 import os
 import pandas as pd
-import numpy as np
+#import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
@@ -89,7 +89,7 @@ class MILTrainer:
             if all([item == 1 for item in [pred_item, label_item]]):
                 tp += 1
             if pred_item == 1:
-                pp += 1        
+                pp += 1
 
             raw_loss = self.criterion(logit, label)
             loss = 0.7 * raw_loss + (1 - 0.7) * results_dict['instance_loss']
@@ -130,7 +130,7 @@ class MILTrainer:
         self.valperformance += [performance]
 
     def log_epoch(self, header, runpath, nr_epochs):
-        epoch_info = '{}/{}\t{}/{}\t{}/{}\t{}/{}     \t{}/{}     \t{}/{}     \t{}/{} \t{}'.format(
+        epoch_info = '{}/{}\t{}|{}\t{}|{}\t{}|{}     \t{}|{}     \t{}|{}     \t{}|{} \t{}'.format(
             len(self.valcost), nr_epochs, round(self.traincost[-1], 4), round(self.valcost[-1], 4),
             round(self.trainperformance[-1], 4), round(self.valperformance[-1], 4),
             self.train_pp[-1], self.val_pp[-1],
@@ -141,8 +141,11 @@ class MILTrainer:
             round(self.val_tp[-1] / (self.val_ap + 1e-8), 2),
             str(datetime.now())[11:19],
         )
-        epoch_score = self.valcost[-1] * (1 - self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
-        if self.current_best is None or self.current_best >= epoch_score: #self.valcost[-1]: # early stopping protocol
+        
+        #epoch_score = self.valcost[-1] * (1 - self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
+        epoch_score = 1 / ((self.val_pp[-1] - self.val_ap)**2 / self.val_ap + 1) * self.val_tp[-1] / (self.val_pp[-1] + 1e-8)
+        #print('ap: {}\npp: {}\nr: {}\nscore: {}|{}'.format(self.val_ap, self.val_pp[-1], self.val_tp[-1] / (self.val_pp[-1] + 1e-8), epoch_score, self.current_best))
+        if self.current_best is None or self.current_best <= epoch_score: #self.valcost[-1]: # early stopping protocol
             self.current_best = epoch_score
             path_model = f"{runpath}model.pth"
             record_history(path_model)
@@ -160,10 +163,30 @@ class MILTrainer:
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
         header = f'epoch\tloss\t\taccuracy\tpred_pos\ttrue_pos\tprecision\trecall  \ttime'
         print(header)
+
+        ##########
+        strike = 0
+        ##########
+
         for _ in range(1, nr_epochs+1):
+
+            ###############
+            if strike >= 5:
+                print('\nx_x beyond recovery x_x\n')
+                break
+            ###############
+
             self.train_epoch(trainloader, device)
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
+
+            ##################################
+            if self.valcost[-1] > 4 * self.traincost[-1]:
+                strike += 1
+            else:
+                strike = 0
+            ##################################
+            #print(strike, self.valcost[-1], self.traincost[-1]*3)
 
 def record_history(path_model):
     if not os.path.exists(path_model):
