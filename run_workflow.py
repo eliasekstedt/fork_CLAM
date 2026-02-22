@@ -82,8 +82,10 @@ if __name__ == '__main__':
         else:
             fpath_state_dict = cfg.state_dict
 
-        for wd in [i * 1e-3 for i in range(1, 12)]:
-            cfg.hparam['weight_decay'] = wd
+
+        trials = [i/10 for i in range(1, 10)]
+        for trial in trials:
+            cfg.hparam['dropout'] = trial
             MilTrainWrapper(
                 dpath_ptFeature=cfg.dpath_ptFeature,
                 fpath_fold0=cfg.fpath_fold0,

@@ -152,11 +152,19 @@ class MILTrainer:
             torch.save(self.model.state_dict(), path_model)
             epoch_info = f'{epoch_info} saved!'
 
-        print(epoch_info)
+        #print(epoch_info)
+        
+
+        if len(self.valcost) <= 1:
+            file_it(f'{runpath}log.txt', '\n' + header, False)
+        file_it(f"{runpath}log.txt", epoch_info, True)
+        
+        """
         with open(runpath + 'log.txt', 'a') as file:
             if len(self.valcost) <= 1:
                 file.write(header+'\n')
             file.write(epoch_info+'\n')
+        """
 
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
@@ -171,8 +179,8 @@ class MILTrainer:
         for _ in range(1, nr_epochs+1):
 
             ###############
-            if strike >= 5:
-                print('\nx_x beyond recovery x_x\n')
+            if strike >= 7:
+                file_it(f'{runpath}log.txt', '\nx_x beyond recovery x_x\n', True)
                 break
             ###############
 
@@ -181,12 +189,11 @@ class MILTrainer:
             self.log_epoch(header, runpath, nr_epochs)
 
             ##################################
-            if self.valcost[-1] > 4 * self.traincost[-1]:
+            if any([self.valcost[-1] > 3 * self.traincost[-1]]):
                 strike += 1
             else:
                 strike = 0
             ##################################
-            #print(strike, self.valcost[-1], self.traincost[-1]*3)
 
 def record_history(path_model):
     if not os.path.exists(path_model):

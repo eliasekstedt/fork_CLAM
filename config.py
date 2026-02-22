@@ -70,16 +70,17 @@ cfg.fltr_params = {
 cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
 
 cfg.X_batch_size = 10 # best kept small for appropriate randomization, aka even bag size per slide
-cfg.X_patch_size = 224
+cfg.X_patch_size = 256
 cfg.target_bag_size = 2500
 
 
-cfg.tag = 'wd_zoom'
+
+cfg.tag = 'dropout_search'
 cfg.hparam = {
-    'dropout': 0.25,
+    'dropout':0.25,
     'batch_size':1,
-    'learning_rate':0.001,
-    'weight_decay':1e-4,
+    'learning_rate':1e-4,
+    'weight_decay':5e-3,
     'nr_epochs':300,
 }
 
