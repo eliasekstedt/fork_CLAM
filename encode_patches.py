@@ -24,6 +24,7 @@ class WSI2BagsReader(Dataset):
         self.patch_size = self.map['patch_size'].unique().item()
         self.wsi = wsi
         self.roi_transforms = img_transforms
+        print(self.roi_transforms)
 
     def apply_filter(self, fpath_qualityLog, fltr_params):
         qlog = pd.read_csv(fpath_qualityLog)
@@ -40,8 +41,7 @@ class WSI2BagsReader(Dataset):
         coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
         patch = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
         
-        #print(self.map)
-        #raise SystemExit
+
         #import matplotlib.pyplot as plt
         #plt.imshow(patch)
         #plt.tight_layout()
@@ -59,7 +59,7 @@ class FeatureX:
     ):
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model = self.get_pbo_encoder(fpath_Xmodel)
-        constants = MODEL2CONSTANTS['pbo_subs']
+        constants = MODEL2CONSTANTS['resnet50_trunc']
         img_transforms = get_eval_transforms(
             mean=constants['mean'],
             std=constants['std'],

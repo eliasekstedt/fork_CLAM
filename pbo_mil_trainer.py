@@ -78,8 +78,8 @@ class MILTrainer:
         return nr_accurate.item()
 
     def train_epoch(self, trainloader, device):
-        self.model.train()
         cost, performance, tp, pp = [0]*4
+        self.model.train()
         for features, label in trainloader:
             features, label = features.squeeze(0).to(device), label.to(device)
             logit, _, Y_hat, results_dict = self.model(features, label, True)
@@ -105,9 +105,9 @@ class MILTrainer:
         self.trainperformance += [performance]
 
     def val_epoch(self, valloader, device):
-        self.model.eval()
         cost, performance, tp, pp = [0] * 4
 
+        self.model.eval()
         with torch.inference_mode():
             for features, label in valloader:
                 features, label = features.squeeze(0).to(device), label.to(device)

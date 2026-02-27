@@ -4,8 +4,8 @@ from config import *
 do_generate_coords = False
 do_qualVal = False
 do_patch_quality_check = False
-do_feature_extraction = False
-do_foldsplitting = False
+do_feature_extraction = True
+do_foldsplitting = True
 do_mil = True
 
 if __name__ == '__main__':
