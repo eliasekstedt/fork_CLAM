@@ -32,7 +32,7 @@ cfg.dpath_diagnosticsRoot = Path('diagnostics')
 cfg.dpath_patchControl = cfg.dpath_diagnosticsRoot / 'patch_control'
 cfg.dpath_geometryCheck = cfg.dpath_patchControl / 'geometry_check'
 cfg.dpath_keepVreject = cfg.dpath_patchControl / 'keepVreject'
-
+cfg.dpath_sampleFltrpassed = cfg.dpath_diagnosticsRoot / 'fltrpassed_samples'
 
 create_dirs(
     cfg.dpath_csvRoot,
@@ -50,6 +50,7 @@ create_dirs(
     cfg.dpath_patchControl,
     cfg.dpath_geometryCheck,
     cfg.dpath_keepVreject,
+    cfg.dpath_sampleFltrpassed,
 )
 
 cfg.fpath_patientInfo = cfg.dpath_csvRoot / 'patient_info.csv'
@@ -69,10 +70,15 @@ cfg.fltr_params = {
 # feauture extraction
 cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
 
-cfg.X_batch_size = 10 # best kept small for appropriate randomization, aka even bag size per slide
+cfg.X_batch_size = 512 # best kept small for appropriate randomization, aka even bag size per slide
 cfg.X_patch_size = 224
 cfg.target_bag_size = 2500
 
+cfg.Xaugm = {
+    'size':224,
+    'znorm_mean':[0.485, 0.456, 0.406],
+    'znorm_std':[0.229, 0.224, 0.225],
+}
 
 
 cfg.tag = 'IN_confirmed'

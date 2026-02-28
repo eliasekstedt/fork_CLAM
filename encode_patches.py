@@ -10,21 +10,31 @@ import pandas as pd
 
 from utils.file_utils import save_hdf5
 from torch.utils.data import Dataset
-from utils.constants import MODEL2CONSTANTS
-from utils.transform_utils import get_eval_transforms
+from torchvision.transforms import Resize, ToTensor, Normalize, Compose
+from PIL import Image
 
 def map_slide2patient(x, slide_id):
     pattern = slide_id.split('_')[0]
     return x.lstrip('patient_') == pattern
 
+def get_transforms(augm):
+    trsforms = []
+    trsforms.append(Resize(augm['size']))
+    trsforms.append(ToTensor())
+    trsforms.append(Normalize(
+        mean=augm['znorm_mean'],
+        std=augm['znorm_std'],
+    ))
+    return Compose(trsforms)
+
 class WSI2BagsReader(Dataset):
-    def __init__(self, fpath_qualityLog, wsi, img_transforms, fltr_params):
+    def __init__(self, fpath_qualityLog, wsi, transforms, fltr_params):
         self.map = self.apply_filter(fpath_qualityLog, fltr_params)
         self.patch_lvl = self.map['patch_lvl'].unique().item()
         self.patch_size = self.map['patch_size'].unique().item()
         self.wsi = wsi
-        self.roi_transforms = img_transforms
-        print(self.roi_transforms)
+        self.transforms = transforms
+        #print(self.transforms)
 
     def apply_filter(self, fpath_qualityLog, fltr_params):
         qlog = pd.read_csv(fpath_qualityLog)
@@ -40,34 +50,60 @@ class WSI2BagsReader(Dataset):
         row = self.map.iloc[idx]
         coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
         patch = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
-        
 
         #import matplotlib.pyplot as plt
         #plt.imshow(patch)
         #plt.tight_layout()
         #plt.show()
-        
-        patch = self.roi_transforms(patch)
-        return {'patch': patch, 'coord': coord}
 
+        patch = self.transforms(patch)
+        return {'patch': patch, 'coord': coord}
+    
+def sample_fltrpassed(reader, slide_id, dpath_sampleFltrpassed, loader_kwargs, augm):
+    n_samples = 100
+    loader = DataLoader(reader, batch_size=n_samples, **loader_kwargs)
+    for data in loader:
+        break
+
+    patches = np.transpose(data['patch'].numpy(), axes=(0, 2, 3, 1))
+    patches = [patch.squeeze(0) for patch in np.array_split(patches, patches.shape[0])]
+    while len(patches) < n_samples:
+        print(f'extending sample for {slide_id}')
+        patches.append(np.zeros_like(patches[0]))
+    
+    row, assem = None, None
+    for patch in patches:
+        if row is None:
+            row = patch
+        else:
+            row = np.concatenate([row, patch], axis=1)
+            if row.shape[1] >= patch.shape[1] * 10:
+                if assem is None:
+                    assem = row
+                else:
+                    assem = np.concatenate([assem, row], axis=0)
+                row = None
+    
+    assem = Normalize(
+        mean=[-m/s for m, s in zip(augm['znorm_mean'], augm['znorm_std'])],
+        std=[1/s for s in augm['znorm_std']]
+    )(torch.tensor(np.transpose(assem, axes=(2, 0, 1))))
+    assem = np.transpose(assem.numpy(), axes=(1, 2, 0))
+    Image.fromarray((assem*255).astype(np.uint8)).save(dpath_sampleFltrpassed / f'{slide_id}.png')
 
 class FeatureX:
     def __init__(
         self, dpath_qualityLog, dpath_wsiRoot, dpath_ptFeature, dpath_h5Feature,
         fpath_segmlog, fpath_encodingMap, fpath_Xmodel, fpath_patientInfo,
-        batch_size, patch_size, fltr_params, target_bag_size,
+        batch_size, augm, fltr_params, target_bag_size, dpath_sampleFltrpassed,
     ):
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        model = self.get_pbo_encoder(fpath_Xmodel)
-        constants = MODEL2CONSTANTS['resnet50_trunc']
-        img_transforms = get_eval_transforms(
-            mean=constants['mean'],
-            std=constants['std'],
-            target_img_size=patch_size,
-        )
+        model = self.get_encoder(fpath_Xmodel)
+        img_transforms = get_transforms(augm)
+        print(f'\ntransforms used for all patches:\n{img_transforms}\n')
         
-        model.eval()
         model = model.to(device)
+        model.eval()
 
         loader_kwargs = {'num_workers': 0, 'pin_memory': True} if device.type == "cuda" else {}
 
@@ -93,9 +129,11 @@ class FeatureX:
             dataset = WSI2BagsReader(
                 fpath_qualityLog=fpath_qualityLog,
                 wsi=wsi,
-                img_transforms=img_transforms,
+                transforms=img_transforms,
                 fltr_params=fltr_params,
             )
+
+            sample_fltrpassed(dataset, slide_id, dpath_sampleFltrpassed, loader_kwargs, augm)
 
             loader = DataLoader(dataset=dataset, batch_size=batch_size, **loader_kwargs)
             fpaths_h5Feature = self.compute_w_loader(device, dpath_h5Feature, loader, model, slide_id, target_bag_size)
@@ -144,7 +182,7 @@ class FeatureX:
                 )
 
     def compute_w_loader(self, device, dpath_h5Feature, loader, model, slide_id, target_bag_size):
-        nr_splits = max(len(loader.dataset) // target_bag_size, 1)
+        nr_splits = 1 #max(len(loader.dataset) // target_bag_size, 1)
         fpaths_h5Feature = [dpath_h5Feature / f"{slide_id}_{i}.h5" for i in range(nr_splits)]
 
         for data in loader:
@@ -169,7 +207,7 @@ class FeatureX:
                 )
         return fpaths_h5Feature
 
-    def get_pbo_encoder(self, fpath_Xmodel):
+    def get_encoder(self, fpath_Xmodel):
         def process_state_dict(state_dict):
             for k in list(state_dict.keys()):
                 state_dict[k.replace("model.", "").replace("resnet.", "")] = state_dict.pop(k)

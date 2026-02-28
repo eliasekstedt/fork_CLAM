@@ -56,9 +56,10 @@ if __name__ == '__main__':
             fpath_Xmodel=cfg.fpath_Xmodel,
             fpath_patientInfo=cfg.fpath_patientInfo,
             batch_size=cfg.X_batch_size,
-            patch_size=cfg.X_patch_size,
+            augm=cfg.Xaugm,
             fltr_params=cfg.fltr_params,
             target_bag_size=cfg.target_bag_size,
+            dpath_sampleFltrpassed=cfg.dpath_sampleFltrpassed,
         )
 
     if do_foldsplitting:

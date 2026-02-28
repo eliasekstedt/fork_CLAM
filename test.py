@@ -194,11 +194,20 @@ def testF():
     f0 = f0.sample(frac=1)
     print(f0['label'].mean())
     print(f0)
-    f0.to_csv(cfg.fpath_fold0)
+    #f0.to_csv(cfg.fpath_fold0)
 
 
 def testG():
-    pass
+    import torch
+    from pathlib import Path
+    dpath_pt = Path('data/1_featureRoot_bagsplit/ptFeature')
+    fpaths = list(dpath_pt.iterdir())
+    for fpath in fpaths:
+        tensor = torch.load(fpath)
+        print(tensor)
+        print(tensor.shape)
+        input('')
+
 
 def testH():
     pass
@@ -222,7 +231,6 @@ def testL():
 
 
 
-testF()
 testG()
 testH()
 testI()
@@ -236,4 +244,5 @@ testB()
 testC()
 testD()
 testE()
+testF()
 
