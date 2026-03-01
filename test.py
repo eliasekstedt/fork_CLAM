@@ -210,7 +210,9 @@ def testG():
 
 
 def testH():
-    pass
+    import numpy as np
+    lst = [0.9, 0.68, 0.73, 0.42, 0.73]
+    print(np.mean(sorted(lst)[len(lst) // 2:]))
 
 def testI():
     pass
@@ -231,7 +233,6 @@ def testL():
 
 
 
-testG()
 testH()
 testI()
 testJ()
@@ -245,4 +246,5 @@ testC()
 testD()
 testE()
 testF()
+testG()
 

@@ -34,7 +34,6 @@ class WSI2BagsReader(Dataset):
         self.patch_size = self.map['patch_size'].unique().item()
         self.wsi = wsi
         self.transforms = transforms
-        #print(self.transforms)
 
     def apply_filter(self, fpath_qualityLog, fltr_params):
         qlog = pd.read_csv(fpath_qualityLog)

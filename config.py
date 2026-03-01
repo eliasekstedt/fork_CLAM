@@ -80,14 +80,24 @@ cfg.Xaugm = {
     'znorm_std':[0.229, 0.224, 0.225],
 }
 
+cfg.excl_by_id = ['037_DEF', '044_ABC', '048_G', '065_DEF', '073_ABC', '081_ABC', '085_CDE', '091_DE', '099_GHK', '144_AB', '151_AB', '154_ABC', '205_ABC', '209_KL', '099_ABC', '116_AB', '003_GH']
 
-cfg.tag = 'IN_confirmed'
+cfg.tag = 'std_excl'
+"""
 cfg.hparam = {
     'dropout':0.25,
     'batch_size':1,
     'learning_rate':1e-4,
     'weight_decay':5e-3,
-    'nr_epochs':300,
+    'nr_epochs':120,
+}
+"""
+cfg.hparam = {
+    'dropout':0.5,
+    'batch_size':1,
+    'learning_rate':1e-3,
+    'weight_decay':5e-5,
+    'nr_epochs':120,
 }
 
-cfg.state_dict = ''
+cfg.state_dict = 'run/excl2/01_13_21_25/model.pth'

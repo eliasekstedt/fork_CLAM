@@ -4,7 +4,7 @@ from config import *
 do_generate_coords = False
 do_qualVal = False
 do_patch_quality_check = False
-do_feature_extraction = True
+do_feature_extraction = False
 do_foldsplitting = True
 do_mil = True
 
@@ -62,38 +62,60 @@ if __name__ == '__main__':
             dpath_sampleFltrpassed=cfg.dpath_sampleFltrpassed,
         )
 
-    if do_foldsplitting:
-        from foldsplitter import FeatureMapSplitter
-        FeatureMapSplitter(
-            fpath_encodingMap=cfg.fpath_encodingMap,
-            fpath_fold0=cfg.fpath_fold0,
-            fpath_fold1=cfg.fpath_fold1,
-        )
+    import random
+    import string
+    while True:
 
-    if do_mil:
-        from pbo_mil_trainer import MilTrainWrapper
-        """
-        why does the train epoch factor in instance loss in loss calculation but not val epoch?
-        """
-        if cfg.state_dict == 'history': # if true, select most recent model
-            with open(f"run/history/history.txt", 'r') as file:
-                fpath_state_dict = file.readlines()[-1]
-                while not fpath_state_dict.endswith('model.pth'):
-                    fpath_state_dict = fpath_state_dict[:-1]
-        else:
-            fpath_state_dict = cfg.state_dict
+        rid = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        if do_foldsplitting:
+            from foldsplitter import FeatureMapSplitter
+            FeatureMapSplitter(
+                fpath_encodingMap=cfg.fpath_encodingMap,
+                excl_by_id=cfg.excl_by_id,
+                fpath_fold0=cfg.fpath_fold0,
+                fpath_fold1=cfg.fpath_fold1,
+                rid=rid,
+            )
 
+        if do_mil:
+            from pbo_mil_trainer import MilTrainWrapper
 
-        trials = [i/10 for i in range(1, 10)]
-        for trial in trials:
-            cfg.hparam['dropout'] = trial
+            if cfg.state_dict == 'history': # if true, select most recent model
+                with open(f"run/history/history.txt", 'r') as file:
+                    fpath_state_dict = file.readlines()[-1]
+                    while not fpath_state_dict.endswith('model.pth'):
+                        fpath_state_dict = fpath_state_dict[:-1]
+            else:
+                fpath_state_dict = cfg.state_dict
+
+            hparam = cfg.hparam
+            hparam['rid'] = str(rid)
             MilTrainWrapper(
                 dpath_ptFeature=cfg.dpath_ptFeature,
                 fpath_fold0=cfg.fpath_fold0,
                 fpath_fold1=cfg.fpath_fold1,
-                hparam=cfg.hparam,
+                hparam=hparam,
                 fpath_state_dict=fpath_state_dict,
                 tag=cfg.tag,
                 device='cuda:0',
             )
 
+"""
+TcNJrW - 01_15_03_55
+syTKD1 - 01_15_35_08
+HVqfdo - 01_15_46_24
+e94S5n - 01_16_43_19
+WVjqmE - 01_16_01_00
+z9wKz5
+IjQCuT - 01_14_46_33
+wm1e2p - 01_17_17_26
+qxiUbc - 
+YDESRs - 
+
+gRv8Oa
+49pTVk
+kng2kA
+WONmXO
+azsWfm
+ZkQI5i
+"""

@@ -1,7 +1,7 @@
 
 import os
 import pandas as pd
-#import numpy as np
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
@@ -63,6 +63,8 @@ class MILTrainer:
         self.valcost, self.valperformance = [], []
         self.val_tp, self.val_pp = [], []
         self.current_best = None
+
+        self.val_precision = []# for selection eval
 
         self.model = model
         self.optimizer = torch.optim.Adam(
@@ -151,21 +153,10 @@ class MILTrainer:
             record_history(path_model)
             torch.save(self.model.state_dict(), path_model)
             epoch_info = f'{epoch_info} saved!'
-
-        #print(epoch_info)
-        
-
+            
         if len(self.valcost) <= 1:
             file_it(f'{runpath}log.txt', '\n' + header, False)
         file_it(f"{runpath}log.txt", epoch_info, True)
-        
-        """
-        with open(runpath + 'log.txt', 'a') as file:
-            if len(self.valcost) <= 1:
-                file.write(header+'\n')
-            file.write(epoch_info+'\n')
-        """
-
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
@@ -176,11 +167,10 @@ class MILTrainer:
         strike = 0
         ##########
 
-        for _ in range(1, nr_epochs+1):
-
+        for _ in range(1, nr_epochs + 1):
             ###############
-            if strike >= 7:
-                file_it(f'{runpath}log.txt', '\nx_x beyond recovery x_x\n', True)
+            if strike >= 10:
+                file_it(f'{runpath}log.txt', '\nX_x beyond recovery x_X\n', True)
                 break
             ###############
 
@@ -188,12 +178,16 @@ class MILTrainer:
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
 
-            ##################################
-            if any([self.valcost[-1] > 3 * self.traincost[-1]]):
+            self.val_precision.append(self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
+
+            ##################################            
+            if any([self.valcost[-1] > 4 * self.traincost[-1]]):
                 strike += 1
             else:
                 strike = 0
             ##################################
+        selection_score = np.mean(sorted(self.val_precision)[len(self.val_precision) // 2:])
+
 
 def record_history(path_model):
     if not os.path.exists(path_model):
@@ -245,6 +239,13 @@ class MilTrainWrapper:
         )
 
         plot_performance(trainer, runpath)
+
+        from pathlib import Path
+        fpath_selectionScores = Path('selection_scores.csv')
+        ss_df = pd.read_csv(fpath_selectionScores)
+        selection_score = np.mean(sorted(trainer.val_precision)[len(trainer.val_precision) // 2:])
+        ss_df.loc[ss_df['rid']==hparam['rid'], 'score'] = selection_score
+        ss_df.to_csv(fpath_selectionScores, index=False)
 
     def init_loaders(self, dpath_features_pt, fpath_map_fold_0, fpath_map_fold_1, batch_size):
         print('initiating loaders ...')
