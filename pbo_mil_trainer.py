@@ -158,35 +158,41 @@ class MILTrainer:
             file_it(f'{runpath}log.txt', '\n' + header, False)
         file_it(f"{runpath}log.txt", epoch_info, True)
         
+        self.val_precision.append(self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
+        
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
         header = f'epoch\tloss\t\taccuracy\tpred_pos\ttrue_pos\tprecision\trecall  \ttime'
         print(header)
 
+        """
         ##########
         strike = 0
         ##########
+        """
 
         for _ in range(1, nr_epochs + 1):
+            """
             ###############
             if strike >= 10:
                 file_it(f'{runpath}log.txt', '\nX_x beyond recovery x_X\n', True)
                 break
             ###############
+            """
 
             self.train_epoch(trainloader, device)
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
 
-            self.val_precision.append(self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
-
+            
+            """
             ##################################            
             if any([self.valcost[-1] > 4 * self.traincost[-1]]):
                 strike += 1
             else:
                 strike = 0
             ##################################
-        selection_score = np.mean(sorted(self.val_precision)[len(self.val_precision) // 2:])
+            """
 
 
 def record_history(path_model):
@@ -196,8 +202,8 @@ def record_history(path_model):
 
 
 class MilTrainWrapper:
-    def __init__(self, dpath_ptFeature, fpath_fold0,
-        fpath_fold1, hparam, fpath_state_dict, tag, device
+    def __init__(self, dpath_ptFeature, fpath_fold0, fpath_fold1,
+        hparam, fpath_state_dict, tag, rids, device,
     ):
         loader_0, loader_1 = self.init_loaders(
             dpath_features_pt=dpath_ptFeature,
@@ -240,12 +246,33 @@ class MilTrainWrapper:
 
         plot_performance(trainer, runpath)
 
+        #selection_score = np.mean(sorted(trainer.val_precision)[len(trainer.val_precision) // 2:])
+        selection_score = np.sum([item > 0.5 for item in trainer.val_precision]) / hparam['nr_epochs']
         from pathlib import Path
+        dpath_run = Path(runpath)
         fpath_selectionScores = Path('selection_scores.csv')
-        ss_df = pd.read_csv(fpath_selectionScores)
-        selection_score = np.mean(sorted(trainer.val_precision)[len(trainer.val_precision) // 2:])
-        ss_df.loc[ss_df['rid']==hparam['rid'], 'score'] = selection_score
+        if fpath_selectionScores.is_file():
+            ss_df = pd.read_csv(fpath_selectionScores)
+        else:
+            ss_df = pd.DataFrame({
+                'run_id':dpath_run.name,
+                'score':selection_score,
+                'rid':[rids],
+            })
+        ss_df = pd.concat(
+            [
+                ss_df,
+                pd.DataFrame({
+                    'run_id':dpath_run.name,
+                    'score':selection_score,
+                    'rid':[rids],
+                })
+            ],
+            axis=0,
+        )
+        #ss_df.loc[ss_df['rid'] == rid, 'score'] = selection_score
         ss_df.to_csv(fpath_selectionScores, index=False)
+        print(f"score: {selection_score}\n")
 
     def init_loaders(self, dpath_features_pt, fpath_map_fold_0, fpath_map_fold_1, batch_size):
         print('initiating loaders ...')

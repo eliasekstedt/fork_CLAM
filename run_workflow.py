@@ -62,19 +62,16 @@ if __name__ == '__main__':
             dpath_sampleFltrpassed=cfg.dpath_sampleFltrpassed,
         )
 
-    import random
-    import string
+    
     while True:
 
-        rid = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
         if do_foldsplitting:
             from foldsplitter import FeatureMapSplitter
-            FeatureMapSplitter(
+            s = FeatureMapSplitter(
                 fpath_encodingMap=cfg.fpath_encodingMap,
                 excl_by_id=cfg.excl_by_id,
                 fpath_fold0=cfg.fpath_fold0,
                 fpath_fold1=cfg.fpath_fold1,
-                rid=rid,
             )
 
         if do_mil:
@@ -88,19 +85,19 @@ if __name__ == '__main__':
             else:
                 fpath_state_dict = cfg.state_dict
 
-            hparam = cfg.hparam
-            hparam['rid'] = str(rid)
             MilTrainWrapper(
                 dpath_ptFeature=cfg.dpath_ptFeature,
                 fpath_fold0=cfg.fpath_fold0,
                 fpath_fold1=cfg.fpath_fold1,
-                hparam=hparam,
+                hparam=cfg.hparam,
                 fpath_state_dict=fpath_state_dict,
                 tag=cfg.tag,
+                rids=s.rids,
                 device='cuda:0',
             )
 
 """
+the best:
 TcNJrW - 01_15_03_55
 syTKD1 - 01_15_35_08
 HVqfdo - 01_15_46_24
@@ -112,10 +109,18 @@ wm1e2p - 01_17_17_26
 qxiUbc - 
 YDESRs - 
 
+just okay:
 gRv8Oa
 49pTVk
 kng2kA
 WONmXO
 azsWfm
 ZkQI5i
+qJcPcu
+AXhV7i
+
+
+#import random
+#import string
+#rid = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
 """
