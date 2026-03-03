@@ -216,15 +216,147 @@ def testH():
 
 def testI():
     import pandas as pd
+    
     fpath_scores = Path('selection_scores.csv')
     df = pd.read_csv(fpath_scores)
+
+    #print(df)
+    case_id_freq = {}
+    for _, row in df.iterrows():
+        unintended_string = row['rid']
+        case_ids_of_run = unintended_string.replace(
+            '[', ''
+        ).replace(
+            ']',''
+        ).replace(
+            "'",''
+        ).replace(
+            ' ',''
+        ).split(',')
+
+        for case_id in case_ids_of_run:
+            if case_id in cfg.excl_by_id:
+                continue
+            if case_id in case_id_freq.keys():
+                case_id_freq[case_id] += 1
+            else:
+                case_id_freq[case_id] = 1
+    
+    freqs = []
+    for key in case_id_freq.keys():
+        freqs.append({
+            'slide_id':key,
+            'freq':case_id_freq[key]
+        })
+    freqs = pd.DataFrame(freqs)
+
+    encoding_map = pd.read_csv(cfg.fpath_encodingMap)
+    encoding_map = encoding_map[encoding_map['slide_id'].isin(freqs['slide_id'])]
+    freqs = freqs.merge(encoding_map, on='slide_id').sort_values(by='freq')
+    print(encoding_map)
+    print(freqs)
+    #print(freqs)
+    #import matplotlib.pyplot as plt
+    #plt.hist(freqs['freq'], bins=50)
+    #plt.show()
+
+
     
 
 def testJ():
-    pass
+    import pandas as pd
+    def get_slide_ids(string):
+        return string.replace(
+            '[', ''
+        ).replace(
+            ']',''
+        ).replace(
+            "'",''
+        ).replace(
+            ' ',''
+        ).split(',')
+    
+    
+    fpath_scores = Path('selection_scores.csv')
+    df = pd.read_csv(fpath_scores)
+
+    #print(df)
+    freqs = []
+    for _, row in df.iterrows():
+        slides_of_row = get_slide_ids(row['rid'])
+        for slide_id in slides_of_row:
+            if slide_id in cfg.excl_by_id:
+                continue
+            freqs.append({
+                'slide_id':slide_id,
+                'score':row['score'],
+                'instance':1,
+            })
+    freqs = pd.DataFrame(freqs)
+    
+    df = pd.read_csv(cfg.fpath_encodingMap)
+    df = df[df['slide_id'].isin(freqs['slide_id'].unique())]
+    df = df[df['label'] == 1]
+    freqs = freqs[freqs['slide_id'].isin(df['slide_id'].unique())]
+    #print(freqs)
+
+
+    freqs = freqs[freqs['score'] > 0.6].drop(columns='score')
+    freqs = freqs.groupby(['slide_id']).sum().sort_values(by='instance')
+    print(freqs)
+
+    import matplotlib.pyplot as plt
+    plt.hist(freqs['instance'], bins=50)
+    plt.show()
+
+
+
 
 def testK():
-    pass
+    import pandas as pd
+    def get_slide_ids(string):
+        return string.replace(
+            '[', ''
+        ).replace(
+            ']',''
+        ).replace(
+            "'",''
+        ).replace(
+            ' ',''
+        ).split(',')
+    
+    
+    fpath_scores = Path('selection_scores.csv')
+    df = pd.read_csv(fpath_scores)
+
+    #print(df)
+    freqs = []
+    for _, row in df.iterrows():
+        slides_of_row = get_slide_ids(row['rid'])
+        for slide_id in slides_of_row:
+            if slide_id in cfg.excl_by_id:
+                continue
+            freqs.append({
+                'slide_id':slide_id,
+                'score':row['score'],
+                'instance':1,
+            })
+    freqs = pd.DataFrame(freqs)
+    
+    df = pd.read_csv(cfg.fpath_encodingMap)
+    df = df[df['slide_id'].isin(freqs['slide_id'].unique())]
+    df = df[df['label'] == 0]
+    freqs = freqs[freqs['slide_id'].isin(df['slide_id'].unique())]
+    #print(freqs)
+
+
+    #freqs = freqs[freqs['score'] > 0.6].drop(columns='score')
+    freqs = freqs.groupby(['slide_id']).mean().sort_values(by='score')
+    print(freqs)
+
+    import matplotlib.pyplot as plt
+    plt.hist(freqs['score'], bins=50)
+    plt.show()
 
 def testL():
     pass
@@ -236,8 +368,6 @@ def testL():
 
 
 
-testI()
-testJ()
 testK()
 testL()
 
@@ -250,4 +380,6 @@ testE()
 testF()
 testG()
 testH()
+testI()
+testJ()
 
