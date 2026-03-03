@@ -215,7 +215,10 @@ def testH():
     print(np.mean(sorted(lst)[len(lst) // 2:]))
 
 def testI():
-    pass
+    import pandas as pd
+    fpath_scores = Path('selection_scores.csv')
+    df = pd.read_csv(fpath_scores)
+    
 
 def testJ():
     pass
@@ -233,7 +236,6 @@ def testL():
 
 
 
-testH()
 testI()
 testJ()
 testK()
@@ -247,4 +249,5 @@ testD()
 testE()
 testF()
 testG()
+testH()
 
