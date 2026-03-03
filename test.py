@@ -339,37 +339,93 @@ def testK():
             freqs.append({
                 'slide_id':slide_id,
                 'score':row['score'],
-                'instance':1,
+                #'instance':1,
             })
     freqs = pd.DataFrame(freqs)
     
     df = pd.read_csv(cfg.fpath_encodingMap)
     df = df[df['slide_id'].isin(freqs['slide_id'].unique())]
-    df = df[df['label'] == 0]
+    #df = df[df['label'] == 1]
     freqs = freqs[freqs['slide_id'].isin(df['slide_id'].unique())]
     #print(freqs)
 
+    
 
     #freqs = freqs[freqs['score'] > 0.6].drop(columns='score')
-    freqs = freqs.groupby(['slide_id']).mean().sort_values(by='score')
+    freqs = freqs.groupby(['slide_id']).mean().sort_values(by='score', ascending=False)
+    labels = df[['slide_id', 'label']]
+    freqs = freqs.merge(labels, on='slide_id')
     print(freqs)
+    freqs_0 = freqs[freqs['label']==0]
+    freqs_1 = freqs[freqs['label']==1]
 
     import matplotlib.pyplot as plt
-    plt.hist(freqs['score'], bins=50)
+    plt.hist(freqs_0['score'], bins=50, alpha=0.3)
+    plt.hist(freqs_1['score'], bins=50, alpha=0.3)
     plt.show()
 
 def testL():
+    import pandas as pd
+    def get_slide_ids(string):
+        return string.replace(
+            '[', ''
+        ).replace(
+            ']',''
+        ).replace(
+            "'",''
+        ).replace(
+            ' ',''
+        ).split(',')
+    
+    
+    fpath_scores = Path('selection_scores.csv')
+    omen_df = pd.read_csv(fpath_scores)
+    #encd_df = pd.read_csv(cfg.fpath_encodingMap)
+    #print(encd_df)
+    #encd_df = encd_df[encd_df['slide_id'].isin(omen_df['slide_id'].unique())]
+    #encd_df = encd_df[encd_df['label'] == 1]
+    omen_df = omen_df.sort_values(by=['score'], ascending=False)
+    omen_df = omen_df.reset_index(drop=True)
+    print(omen_df)
+    #omen_df = omen_df[omen_df['score']]
+
+    for i, row in omen_df.iterrows():
+        slide_ids = get_slide_ids(row['rid'])
+        if i == 0:
+            omens = slide_ids
+        else:
+            omens = [omen for omen in omens if omen in slide_ids]
+            print(i, row['score'], omens)
+        
+    
+def testM():
     pass
 
+def testN():
+    pass
 
+def testO():
+    pass
 
-    
+def testP():
+    pass
+
+def testQ():
+    pass
+
+def testR():
+    pass
+
+def testS():
+    pass
+
+def testT():
+    pass
 
 
 
 
 testK()
-testL()
 
 raise SystemExit
 testA()
@@ -383,3 +439,4 @@ testH()
 testI()
 testJ()
 
+testL()
