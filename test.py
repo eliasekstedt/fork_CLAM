@@ -1,6 +1,17 @@
 
 from config import *
 
+def get_slide_ids(string):
+    return string.replace(
+        '[', ''
+    ).replace(
+        ']',''
+    ).replace(
+        "'",''
+    ).replace(
+        ' ',''
+    ).split(',')
+
 def testA():
     import pandas as pd
     import re
@@ -450,13 +461,51 @@ def testN():
         score += np.prod(window) / len(vec)
     print(score)
 
-
-
-
-
-
 def testO():
-    pass
+    import pandas as pd
+    from tqdm import tqdm
+    df = pd.read_csv('ss_fold_specified.csv')
+    birds = []
+    for _, row in df.iterrows():
+        bird_line = get_slide_ids(row['incl_of_fold0'])
+        [birds.append(bird) for bird in bird_line if not bird in birds]
+
+    weights = {}
+    for bird in birds:
+        weights[bird] = 1
+    weights['error_rate'] = -1
+    
+    lr, breaking_point = 0.1, 10
+    record = []
+    for _ in tqdm(range(130)):
+        error_rate = 0
+        for _, row in df.iterrows():
+            bird_line = get_slide_ids(row['incl_of_fold0'])
+            load = 0
+            for bird in bird_line:
+                load += weights[bird]
+            linebreak = load >= breaking_point
+
+            if linebreak and row['score'] == -1:
+                error_rate += 1 / df.shape[0]
+                for bird in bird_line:
+                    weights[bird] -= lr / len(bird_line)
+            elif not linebreak and row['score'] == 0:
+                error_rate += 1 / df.shape[0]
+                for bird in bird_line:
+                    weights[bird] += lr / len(bird_line)
+        weights['error_rate'] = error_rate
+        record.append(weights.copy())
+
+    record = pd.DataFrame(record)
+    print(record)
+    print(record.columns[record.iloc[-1].argmax()])
+    import matplotlib.pyplot as plt
+    #plt.plot(record['error_rate'])
+    plt.plot(record[record.columns[record.iloc[-1].argmax()]])
+    plt.show()
+
+
 
 def testP():
     pass
@@ -473,9 +522,14 @@ def testS():
 def testT():
     pass
 
+testO()
+testP()
+testQ()
+testR()
+testS()
+testT()
 
 
-testN()
 
 raise SystemExit
 testA()
@@ -492,3 +546,4 @@ testJ()
 testL()
 testK()
 testM()
+testN()
