@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
         import random as rnd
         rnd.shuffle(excl_rnd_set)
-        wedge = int(len(excl_rnd_set) * 0.10)
+        wedge = int(len(excl_rnd_set) * 0.4)
 
         excl_rnd = excl_rnd_set[wedge:]
         incl_rnd = excl_rnd_set[:wedge]
@@ -135,6 +135,9 @@ if __name__ == '__main__':
                 slide_id for slide_id in incl_rnd
                 if slide_id in pd.read_csv(cfg.fpath_fold0)['slide_id'].to_list()
             ]
+            if len(incl_rnd_fold_0) == 0:
+                print(f'incl_rnd_fold_0 is empty: {incl_rnd_fold_0}')
+                break
 
             if cfg.state_dict == 'history': # if true, select most recent model
                 with open(f"run/history/history.txt", 'r') as file:
