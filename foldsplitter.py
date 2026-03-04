@@ -5,25 +5,14 @@ import pandas as pd
 class FeatureMapSplitter:
     def __init__(self, fpath_encodingMap, excl_by_id, fpath_fold0, fpath_fold1):
         mmap = pd.read_csv(fpath_encodingMap)
-        all_ids = mmap['slide_id'].to_list()
         mmap = mmap[~mmap['slide_id'].isin(excl_by_id)]
-
-        pex = mmap[mmap['label'] == 1].sample(frac=0.9)
-        nex = mmap[mmap['label'] == 0].sample(frac=0.75)
-        mmap = pd.concat([pex, nex], axis=0).sample(frac=1)
-        remaining_ids = mmap['slide_id'].to_list()
-        self.rids = [id for id in all_ids if id not in remaining_ids]
-        #print(mmap)
-        #message = f"filtered_ids:\n{fltrd_ids}"
-        #with open('fltrlog.txt', 'a') as file:
-        #    file.write(f'{rid}\n{message}\n')
-        #raise SystemExit
-
         mmap['case_id'] = mmap['slide_id'].apply(self.get_case_id)
+
         fold_0, fold_1 = self.split_kfold(mmap)
         fold_0.to_csv(fpath_fold0, index=False)
         fold_1.to_csv(fpath_fold1, index=False)
         fold_0_label_0_ratio = 1 - (fold_0['label'].sum() / fold_0.shape[0])
+        
         print(f"label 0 ratio: {fold_0_label_0_ratio}")
 
     def get_case_id(self, slide_id):

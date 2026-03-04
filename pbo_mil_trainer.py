@@ -151,8 +151,8 @@ class MILTrainer:
             self.current_best = epoch_score
             path_model = f"{runpath}model.pth"
             record_history(path_model)
-            torch.save(self.model.state_dict(), path_model)
-            epoch_info = f'{epoch_info} saved!'
+            #torch.save(self.model.state_dict(), path_model)
+            epoch_info = f'{epoch_info} not saved!'
             
         if len(self.valcost) <= 1:
             file_it(f'{runpath}log.txt', '\n' + header, False)
@@ -161,6 +161,15 @@ class MILTrainer:
         self.val_precision.append(self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
+        #####################
+        def compute_score(vec):
+            vec = [[0, item][int(item > 0.5)] for item in vec]
+            score = 0
+            for i in range(3, len(vec)+1):
+                window = vec[i-3:i]
+                score += np.prod(window) / len(vec)
+            return score
+        ###############
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
         header = f'epoch\tloss\t\taccuracy\tpred_pos\ttrue_pos\tprecision\trecall  \ttime'
         print(header)
@@ -183,6 +192,11 @@ class MILTrainer:
             self.train_epoch(trainloader, device)
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
+            ################
+            if _ > 3 and compute_score(self.val_precision) > 0:
+                print('breaking')
+                break
+            ################
 
             
             """
@@ -203,7 +217,7 @@ def record_history(path_model):
 
 class MilTrainWrapper:
     def __init__(self, dpath_ptFeature, fpath_fold0, fpath_fold1,
-        hparam, fpath_state_dict, tag, rids, device,
+        hparam, fpath_state_dict, tag, device,
     ):
         loader_0, loader_1 = self.init_loaders(
             dpath_features_pt=dpath_ptFeature,
@@ -230,7 +244,7 @@ class MilTrainWrapper:
         
         runpath = self.init_run(hparam, logmore, tag, device)
         model = self.init_model(runpath, fpath_state_dict, hparam['dropout'], device)
-        trainer = self.learn_parameters(
+        self.trainer = self.learn_parameters(
             runpath=runpath,
             loader_0=loader_0,
             loader_1=loader_1,
@@ -244,35 +258,9 @@ class MilTrainWrapper:
             device=device,
         )
 
-        plot_performance(trainer, runpath)
+        plot_performance(self.trainer, runpath)
 
-        #selection_score = np.mean(sorted(trainer.val_precision)[len(trainer.val_precision) // 2:])
-        selection_score = np.sum([item > 0.5 for item in trainer.val_precision]) / hparam['nr_epochs']
-        from pathlib import Path
-        dpath_run = Path(runpath)
-        fpath_selectionScores = Path('selection_scores.csv')
-        if fpath_selectionScores.is_file():
-            ss_df = pd.read_csv(fpath_selectionScores)
-        else:
-            ss_df = pd.DataFrame({
-                'run_id':dpath_run.name,
-                'score':selection_score,
-                'rid':[rids],
-            })
-        ss_df = pd.concat(
-            [
-                ss_df,
-                pd.DataFrame({
-                    'run_id':dpath_run.name,
-                    'score':selection_score,
-                    'rid':[rids],
-                })
-            ],
-            axis=0,
-        )
-        #ss_df.loc[ss_df['rid'] == rid, 'score'] = selection_score
-        ss_df.to_csv(fpath_selectionScores, index=False)
-        print(f"score: {selection_score}\n")
+        
 
     def init_loaders(self, dpath_features_pt, fpath_map_fold_0, fpath_map_fold_1, batch_size):
         print('initiating loaders ...')
