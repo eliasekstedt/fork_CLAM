@@ -6,6 +6,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 from datetime import datetime
+#################################
+from zpecial import compute_score
+#################################
+
 
 def plot_performance(protocol, runpath):
     epochs = range(1, len(protocol.valcost) + 1)
@@ -161,15 +165,6 @@ class MILTrainer:
         self.val_precision.append(self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
         
     def execute_train_protocol(self, trainloader, valloader, nr_epochs, runpath, device):
-        #####################
-        def compute_score(vec):
-            vec = [[0, item][int(item > 0.5)] for item in vec]
-            score = 0
-            for i in range(3, len(vec)+1):
-                window = vec[i-3:i]
-                score += np.prod(window) / len(vec)
-            return score
-        ###############
         print(f'\nbeginning training {str(datetime.now())[11:19]}')
         header = f'epoch\tloss\t\taccuracy\tpred_pos\ttrue_pos\tprecision\trecall  \ttime'
         print(header)
@@ -193,7 +188,7 @@ class MILTrainer:
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
             ################
-            if _ > 3 and compute_score(self.val_precision) > 0:
+            if _ > 5 and compute_score(self.val_precision) > 0:
                 print('breaking')
                 break
             ################

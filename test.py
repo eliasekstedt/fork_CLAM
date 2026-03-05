@@ -56,18 +56,18 @@ def testA():
                 as_array = fold[dcol_names].to_numpy()
                 return np.sum(np.sum(as_array, axis=0) ** 2).item()
 
-            def create_balanced_splits(df, dcol_names, k):
-                df = df.reset_index(drop=True)
-                df = df.sort_values('mod_psa', ascending=False)
+            def create_balanced_splits(ss_df, dcol_names, k):
+                ss_df = ss_df.reset_index(drop=True)
+                ss_df = ss_df.sort_values('mod_psa', ascending=False)
                 folds = []
-                for n in range(df.shape[0] + 1):
+                for n in range(ss_df.shape[0] + 1):
                     if n <= k:
                         if len(folds) == k:
                             continue
-                        folds.append(df.iloc[[n]])
+                        folds.append(ss_df.iloc[[n]])
                         continue
                     
-                    last_row = df.iloc[[n-1]]
+                    last_row = ss_df.iloc[[n-1]]
                     scores = [
                         score_fold(pd.concat([fold, last_row], axis=0), dcol_names)# - score_fold(fold, dcol_names)
                         for fold in folds
@@ -95,7 +95,7 @@ def testA():
             jcol_name = 'case_id'
             dmap = dmap.groupby('case_id')[dcol_names].mean().reset_index()
             fmap = create_balanced_splits(
-                df=dmap[[jcol_name] + dcol_names],
+                ss_df=dmap[[jcol_name] + dcol_names],
                 dcol_names=dcol_names,
                 k=5,
             )
@@ -151,8 +151,8 @@ def testC():
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    def scatter_matrix(df, dpath_diagnostics):
-        sns.pairplot(df)
+    def scatter_matrix(ss_df, dpath_diagnostics):
+        sns.pairplot(ss_df)
         plt.savefig(dpath_diagnostics / 'quality_sm.png')
 
     #track_cols = ['on_bg', 'on_blur', 'on_dist']
@@ -229,11 +229,11 @@ def testI():
     import pandas as pd
     
     fpath_scores = Path('selection_scores_0.csv')
-    df = pd.read_csv(fpath_scores)
+    ss_df = pd.read_csv(fpath_scores)
 
-    #print(df)
+    #print(ss_df)
     case_id_freq = {}
-    for _, row in df.iterrows():
+    for _, row in ss_df.iterrows():
         unintended_string = row['rid']
         case_ids_of_run = unintended_string.replace(
             '[', ''
@@ -289,11 +289,11 @@ def testJ():
     
     
     fpath_scores = Path('selection_scores_0.csv')
-    df = pd.read_csv(fpath_scores)
+    ss_df = pd.read_csv(fpath_scores)
 
-    #print(df)
+    #print(ss_df)
     freqs = []
-    for _, row in df.iterrows():
+    for _, row in ss_df.iterrows():
         slides_of_row = get_slide_ids(row['rid'])
         for slide_id in slides_of_row:
             if slide_id in cfg.excl_by_id:
@@ -305,10 +305,10 @@ def testJ():
             })
     freqs = pd.DataFrame(freqs)
     
-    df = pd.read_csv(cfg.fpath_encodingMap)
-    df = df[df['slide_id'].isin(freqs['slide_id'].unique())]
-    df = df[df['label'] == 1]
-    freqs = freqs[freqs['slide_id'].isin(df['slide_id'].unique())]
+    ss_df = pd.read_csv(cfg.fpath_encodingMap)
+    ss_df = ss_df[ss_df['slide_id'].isin(freqs['slide_id'].unique())]
+    ss_df = ss_df[ss_df['label'] == 1]
+    freqs = freqs[freqs['slide_id'].isin(ss_df['slide_id'].unique())]
     #print(freqs)
 
 
@@ -338,11 +338,11 @@ def testK():
     
     
     fpath_scores = Path('selection_scores_0.csv')
-    df = pd.read_csv(fpath_scores)
+    ss_df = pd.read_csv(fpath_scores)
 
-    #print(df)
+    #print(ss_df)
     freqs = []
-    for _, row in df.iterrows():
+    for _, row in ss_df.iterrows():
         slides_of_row = get_slide_ids(row['rid'])
         for slide_id in slides_of_row:
             if slide_id in cfg.excl_by_id_pos + cfg.excl_by_id_neg:
@@ -354,17 +354,17 @@ def testK():
             })
     freqs = pd.DataFrame(freqs)
     
-    df = pd.read_csv(cfg.fpath_encodingMap)
-    df = df[df['slide_id'].isin(freqs['slide_id'].unique())]
-    #df = df[df['label'] == 1]
-    freqs = freqs[freqs['slide_id'].isin(df['slide_id'].unique())]
+    ss_df = pd.read_csv(cfg.fpath_encodingMap)
+    ss_df = ss_df[ss_df['slide_id'].isin(freqs['slide_id'].unique())]
+    #ss_df = ss_df[ss_df['label'] == 1]
+    freqs = freqs[freqs['slide_id'].isin(ss_df['slide_id'].unique())]
     #print(freqs)
 
     
 
     #freqs = freqs[freqs['score'] > 0.6].drop(columns='score')
     freqs = freqs.groupby(['slide_id']).mean().sort_values(by='score', ascending=False)
-    labels = df[['slide_id', 'label']]
+    labels = ss_df[['slide_id', 'label']]
     freqs = freqs.merge(labels, on='slide_id')
     print(freqs)
     freqs_0 = freqs[freqs['label']==0]
@@ -464,9 +464,9 @@ def testN():
 def testO():
     import pandas as pd
     from tqdm import tqdm
-    df = pd.read_csv('ss_fold_specified.csv')
+    ss_df = pd.read_csv('ss_fold_specified.csv')
     birds = []
-    for _, row in df.iterrows():
+    for _, row in ss_df.iterrows():
         bird_line = get_slide_ids(row['incl_of_fold0'])
         [birds.append(bird) for bird in bird_line if not bird in birds]
 
@@ -475,10 +475,13 @@ def testO():
         weights[bird] = 1
     weights['error_rate'] = -1
     
-    lr, breaking_point = 0.1, 10
+    lr, breaking_point = 0.005, 10
+
+    N = 500
     record = []
-    for _ in tqdm(range(130)):
+    for i in tqdm(range(N)):
         error_rate = 0
+        df = ss_df.sample(frac=0.5)
         for _, row in df.iterrows():
             bird_line = get_slide_ids(row['incl_of_fold0'])
             load = 0
@@ -489,23 +492,39 @@ def testO():
             if linebreak and row['score'] == -1:
                 error_rate += 1 / df.shape[0]
                 for bird in bird_line:
-                    weights[bird] -= lr / len(bird_line)
+                    weights[bird] -= lr * len(bird_line) # final factor probably only helps because the small birdlines are less reliable as datapoints (for some reason)
+                    #weights[bird] = max([weights[bird], 0]) # or maybe i have too many datapoits (though should be better anyway)
             elif not linebreak and row['score'] == 0:
                 error_rate += 1 / df.shape[0]
                 for bird in bird_line:
-                    weights[bird] += lr / len(bird_line)
+                    weights[bird] += lr * len(bird_line)
         weights['error_rate'] = error_rate
         record.append(weights.copy())
 
     record = pd.DataFrame(record)
-    print(record)
-    print(record.columns[record.iloc[-1].argmax()])
-    import matplotlib.pyplot as plt
+    #print(record)
+
+    highlight = record.iloc[-1].nlargest(12).index.tolist()
+    lowlight = record.iloc[-1].nsmallest(12).index.tolist()
+    print(f"high: {highlight}")
+    print(f"low: {lowlight}")
+    #import matplotlib.pyplot as plt
+    #plt.plot(record[highlight])
     #plt.plot(record['error_rate'])
-    plt.plot(record[record.columns[record.iloc[-1].argmax()]])
-    plt.show()
+    #plt.plot(record[record.columns[record.iloc[-1].argmax()]])
+    #plt.plot(record[record.columns[record.iloc[-1].argmin()]])
+    #plt.ylim([0, max(record['error_rate'])])
+    #plt.show()
+    
 
+    #['031_ABC', '176_GHK', '201_KL', '144_EF', '210_L', '110_DEF', '148_ABC'|'039_DEF', '200_AB', '071_FGH', '162_DEF', '189_EF', '001_ABC', '091_AB']
+    #['176_GHK', '031_ABC', '144_EF', '177_DEF', '072_ABC', '163_ABC', '158_CD'|'042_DE', '007_DEF', '026_DEF', '118_DEF', '107_L', '140_DEF', '091_AB']
+    #
 
+    #high: ['140_DEF', '001_ABC', '125_DEF', '042_DE', '091_AB']
+    #low: ['176_GHK', '144_EF', '144_CD', '028_EF', '115_DEF']
+    #high: ['091_AB', '189_EF', '071_FGH', '104_AB', '125_DEF']
+    #low: ['144_EF', '031_ABC', '210_L', '144_CD', '176_GHK']
 
 def testP():
     pass

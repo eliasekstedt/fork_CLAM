@@ -17,3 +17,6 @@ zz_**
 selection_scores.csv
 **/milFolds/
 **/_archive/
+zpecial.py
+*.csv
+csv/milFolds/*
