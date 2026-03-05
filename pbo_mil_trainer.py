@@ -6,10 +6,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 from datetime import datetime
-#################################
-from zpecial import compute_score
-#################################
-
 
 def plot_performance(protocol, runpath):
     epochs = range(1, len(protocol.valcost) + 1)
@@ -169,39 +165,11 @@ class MILTrainer:
         header = f'epoch\tloss\t\taccuracy\tpred_pos\ttrue_pos\tprecision\trecall  \ttime'
         print(header)
 
-        """
-        ##########
-        strike = 0
-        ##########
-        """
-
         for _ in range(1, nr_epochs + 1):
-            """
-            ###############
-            if strike >= 10:
-                file_it(f'{runpath}log.txt', '\nX_x beyond recovery x_X\n', True)
-                break
-            ###############
-            """
-
             self.train_epoch(trainloader, device)
             self.val_epoch(valloader, device)
             self.log_epoch(header, runpath, nr_epochs)
-            ################
-            if _ > 5 and compute_score(self.val_precision) > 0:
-                print('breaking')
-                break
-            ################
 
-            
-            """
-            ##################################            
-            if any([self.valcost[-1] > 4 * self.traincost[-1]]):
-                strike += 1
-            else:
-                strike = 0
-            ##################################
-            """
 
 
 def record_history(path_model):
