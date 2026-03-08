@@ -14,6 +14,7 @@ class FeatureMapSplitter:
         fold_0_label_0_ratio = 1 - (fold_0['label'].sum() / fold_0.shape[0])
         
         print(f"label 0 ratio: {fold_0_label_0_ratio}")
+        self.label0_ratio = fold_0_label_0_ratio
 
     def get_case_id(self, slide_id):
         return re.match(r"([^_]+)", slide_id).group(1)

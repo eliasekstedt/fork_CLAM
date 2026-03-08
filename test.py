@@ -527,7 +527,14 @@ def testO():
     #low: ['144_EF', '031_ABC', '210_L', '144_CD', '176_GHK']
 
 def testP():
-    pass
+    """
+    import pandas as pd
+    df = pd.read_csv('ss_most_data0.csv')
+    df['label0_ratio'] = -1
+    df = df[['rid', 'score', 'label0_ratio', 'slides_of_fold0']]
+    print(df)
+    df.to_csv('ss_most_data.csv', index=False)
+    """
 
 def testQ():
     pass
@@ -541,8 +548,6 @@ def testS():
 def testT():
     pass
 
-testO()
-testP()
 testQ()
 testR()
 testS()
@@ -561,8 +566,9 @@ testG()
 testH()
 testI()
 testJ()
-
-testL()
 testK()
+testL()
 testM()
 testN()
+testO()
+testP()

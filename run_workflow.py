@@ -1,7 +1,7 @@
 
 from config import *
 #################################
-from zpecial import compute_score2
+from zpecial import compute_score2, get_variable_excl
 #################################
 
 do_generate_coords = False
@@ -78,8 +78,15 @@ if __name__ == '__main__':
     dpath_scorePlots = Path('score_plots')
     dpath_scorePlots.mkdir(exist_ok=True)
 
+    emap = pd.read_csv(cfg.fpath_encodingMap)
+
     while True:
-        emap = pd.read_csv(cfg.fpath_encodingMap)
+        instances = pd.read_csv(fpath_selectionScores)
+
+        #print(
+        #    len(emap[emap['label'] == 0].sample(frac=p)['slide_id'].to_list()),
+        #    len(emap[emap['label'] == 1].sample(frac=p)['slide_id'].to_list()),
+        #); raise SystemExit
         excl_by_id = [# by visual inspection
             '037_DEF', '044_ABC', '048_G', '065_DEF', '073_ABC', '081_ABC',
             '085_CDE', '091_DE', '099_GHK', '144_AB', '151_AB', '154_ABC',
@@ -87,15 +94,20 @@ if __name__ == '__main__':
         ] + [# probably weak signal through testing
             '091_AB', '039_DEF', '125_DEF', '042_DE', '071_FGH', '167_CD',
             '200_AB', '162_DEF', '168_DEF', '001_ABC', '205_DEF'
-        ] + emap[emap['label'] == 0].sample(frac=p)['slide_id'].to_list() + emap[emap['label'] == 1].sample(frac=p)['slide_id'].to_list()
+        ] + get_variable_excl(instances, emap)
+        #emap[emap['label'] == 0].sample(frac=p)['slide_id'].to_list() + emap[emap['label'] == 1].sample(frac=p)['slide_id'].to_list()
 
-        FeatureMapSplitter(
+        label0_ratio = FeatureMapSplitter(
             fpath_encodingMap=cfg.fpath_encodingMap,
             excl_by_id=excl_by_id,
             fpath_fold0=cfg.fpath_fold0,
             fpath_fold1=cfg.fpath_fold1,
-        )
-        ids_fold_0 = pd.read_csv(cfg.fpath_fold0)['slide_id'].to_list()
+        ).label0_ratio
+        ids_fold_0 = pd.read_csv(
+            cfg.fpath_fold0
+        ).sort_values(
+            by='slide_id'
+        )['slide_id'].to_list()
         
         #print(ids_fold_0, len(ids_fold_0))
         if len(ids_fold_0) == 0:
@@ -132,6 +144,7 @@ if __name__ == '__main__':
         row = pd.DataFrame({
             'rid':rid,
             'score':score,
+            'label0_ratio':label0_ratio,
             'slides_of_fold0':[ids_fold_0],
         })
         if not fpath_selectionScores.is_file():
@@ -141,14 +154,14 @@ if __name__ == '__main__':
             ss_df = pd.concat([ss_df, row], axis=0)
 
         ss_df.to_csv(fpath_selectionScores, index=False)
-        print(f'nr_datapoints in {fpath_selectionScores.name}:\n{ss_df.shape[0]}')
         print(f"score: {score}\n")
+        print(f'nr_datapoints in {fpath_selectionScores.name}: {ss_df.shape[0]}')
 
         plt.plot(tcost)
         plt.plot(vcost)
         plt.ylim([0, 1])
         plt.tight_layout()
-        plt.savefig(dpath_scorePlots / f'cost_{str(score).replace('.', '')}_{rid}.png')
+        plt.savefig(dpath_scorePlots / f"cost_{str(score).replace('.', '')}_{rid}.png")
         plt.figure()
 
         tacc = wrapper.trainer.trainperformance
@@ -157,7 +170,7 @@ if __name__ == '__main__':
         plt.plot(vacc)
         plt.ylim([0, 1])
         plt.tight_layout()
-        plt.savefig(dpath_scorePlots / f'acc_{str(score).replace('.', '')}_{rid}.png')
+        plt.savefig(dpath_scorePlots / f"acc_{str(score).replace('.', '')}_{rid}.png")
         plt.figure()
         ########################
         ########################

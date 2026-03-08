@@ -18,6 +18,5 @@ selection_scores.csv
 **/milFolds/
 **/_archive/
 zpecial.py
-*.csv
 csv/milFolds/*.csv
 score_plots/
