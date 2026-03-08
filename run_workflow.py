@@ -1,7 +1,7 @@
 
 from config import *
 #################################
-from zpecial import compute_score2, get_variable_excl
+from zpecial import *
 #################################
 
 do_generate_coords = False
@@ -71,17 +71,27 @@ if __name__ == '__main__':
     import string
     import random as rnd
     import pandas as pd
-    import matplotlib.pyplot as plt
+    #import matplotlib.pyplot as plt
     p = 0.5
     
-    fpath_selectionScores = Path('ss_most_data.csv')
+    fpath_selectionScores = Path('ss_123.csv')
     dpath_scorePlots = Path('score_plots')
     dpath_scorePlots.mkdir(exist_ok=True)
 
     emap = pd.read_csv(cfg.fpath_encodingMap)
 
     while True:
-        instances = pd.read_csv(fpath_selectionScores)
+        if fpath_selectionScores.is_file():
+            instances = pd.read_csv(fpath_selectionScores)
+        else:
+            instances = pd.DataFrame({
+                'rid':[],
+                'score0':[],
+                'score1':[],
+                'score2':[],
+                'label0_ratio':[],
+                'slides_of_fold0':[],
+            })
 
         #print(
         #    len(emap[emap['label'] == 0].sample(frac=p)['slide_id'].to_list()),
@@ -137,13 +147,18 @@ if __name__ == '__main__':
 
         ########################
         ########################
+        vprecision = wrapper.trainer.val_precision
+        score0 = compute_score0(vprecision)
+        score2 = compute_score2(vprecision)
         tcost = wrapper.trainer.traincost
         vcost = wrapper.trainer.valcost
-        score = compute_score2(tcost, vcost)
+        score1 = compute_score1(tcost, vcost)
         rid = ''.join(rnd.choices(string.ascii_letters + string.digits, k=6))
         row = pd.DataFrame({
             'rid':rid,
-            'score':score,
+            'score0':score0,
+            'score1':score1,
+            'score2':score2,
             'label0_ratio':label0_ratio,
             'slides_of_fold0':[ids_fold_0],
         })
@@ -154,14 +169,15 @@ if __name__ == '__main__':
             ss_df = pd.concat([ss_df, row], axis=0)
 
         ss_df.to_csv(fpath_selectionScores, index=False)
-        print(f"score: {score}\n")
+        print(f"scores:\n{score0},\n{score1},\n{score2}\n")
         print(f'nr_datapoints in {fpath_selectionScores.name}: {ss_df.shape[0]}')
 
+        """
         plt.plot(tcost)
         plt.plot(vcost)
         plt.ylim([0, 1])
         plt.tight_layout()
-        plt.savefig(dpath_scorePlots / f"cost_{str(score).replace('.', '')}_{rid}.png")
+        plt.savefig(dpath_scorePlots / f"cost_{str(score1).replace('.', '')}_{rid}.png")
         plt.figure()
 
         tacc = wrapper.trainer.trainperformance
@@ -172,6 +188,7 @@ if __name__ == '__main__':
         plt.tight_layout()
         plt.savefig(dpath_scorePlots / f"acc_{str(score).replace('.', '')}_{rid}.png")
         plt.figure()
+        """
         ########################
         ########################
 
