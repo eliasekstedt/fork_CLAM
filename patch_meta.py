@@ -62,12 +62,6 @@ class PatchFilter:
         condition_1 = np.where(gpatch > np.max(gpatch) * 0.96, 255, 0)
         mask = np.logical_and(condition_0, condition_1)
         return np.mean(mask), mask
-
-    """
-    def on_blur(self, patch):
-        gray = cv2.cvtColor(patch, cv2.COLOR_RGB2GRAY)
-        return cv2.Laplacian(gray, cv2.CV_64F).var()
-    """
     
     def on_blur(self, patch, mask):
         mask = ~mask
@@ -78,7 +72,6 @@ class PatchFilter:
         if lap.size == 0:
             return 0 
             
-
         return lap.var()
     
     def apply(self, patch):
@@ -153,20 +146,3 @@ class MetaLooper:
                 fltr=PatchFilter(),
             )
 
-"""
-def on_otsu(self, patch):
-    def get_chan_std(patch, mask):
-        tissue_or_zero = patch * mask[:, :, None]
-        tissue_chan_std = np.std(np.sum(tissue_or_zero, axis=(0, 1)) / (np.sum(mask)*255))
-        return tissue_chan_std
-    
-    patch_hsv = cv2.cvtColor(patch, cv2.COLOR_RGB2HSV)
-    patch_s = cv2.medianBlur(patch_hsv[:, :, 1], 3)
-    _, mask = cv2.threshold(patch_s, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    mask = mask // 255
-
-    tissue_chan_std = get_chan_std(patch, mask)
-    not_tissue_chan_std = get_chan_std(patch, np.ones_like(mask) - mask)
-
-    return np.mean(mask), tissue_chan_std, not_tissue_chan_std
-"""
