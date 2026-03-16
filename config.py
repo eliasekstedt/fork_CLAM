@@ -1,6 +1,7 @@
 
 from pathlib import Path
 
+
 def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
@@ -14,7 +15,8 @@ cfg.dpath_wsiRoot = Path(wsi_origin)
 
 cfg.dpath_csvRoot = Path('csv/')
 cfg.dpath_qualityLog = cfg.dpath_csvRoot / 'quality_log'
-cfg.dpath_milFolds = cfg.dpath_csvRoot / 'milFolds'
+cfg.dpath_milfolds = cfg.dpath_csvRoot / 'milFolds'
+cfg.holdout_fold_name = 'fold_0.csv'
 
 
 cfg.dpath_dataRoot = Path('data/')
@@ -45,7 +47,7 @@ create_dirs(
     cfg.dpath_featureRoot,
     cfg.dpath_ptFeature,
     cfg.dpath_h5Feature,
-    cfg.dpath_milFolds,
+    cfg.dpath_milfolds,
     cfg.dpath_diagnosticsRoot,
     cfg.dpath_patchControl,
     cfg.dpath_geometryCheck,
@@ -59,8 +61,8 @@ cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
 cfg.fpath_encodingMap = cfg.dpath_csvRoot / 'encoding_map.csv'
 cfg.fpath_patchProperties = cfg.dpath_patchControl / 'patchProperties.png'
 cfg.fpath_perSlideInfo = cfg.dpath_patchControl / 'per_slide_info.csv'
-cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
-cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
+#cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
+#cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 
 cfg.fltr_params = {
     'bg':0.5,
@@ -80,8 +82,14 @@ cfg.Xaugm = {
     'znorm_std':[0.229, 0.224, 0.225],
 }
 
+from datetime import datetime
+current = datetime.now()
 
-cfg.tag = 'discard'
+n_epochs = 120
+cfg.tag = f'E{n_epochs}' + '_{}_{}_{}_{}'.format(
+    str(current)[8:10], str(current)[11:13],
+    str(current)[14:16], str(current)[17:19],
+)
 """
 cfg.hparam = {
     'dropout':0.25,
@@ -96,7 +104,14 @@ cfg.hparam = {
     'batch_size':1,
     'learning_rate':1e-3,
     'weight_decay':5e-5,
-    'nr_epochs':30,
+    'nr_epochs':n_epochs,
 }
 
-cfg.state_dict = 'run/excl2/01_13_21_25/model.pth'
+cfg.state_dict = ''
+if cfg.state_dict == 'history': # if true, select most recent model
+    with open(f"run/history/history.txt", 'r') as file:
+        fpath_state_dict = file.readlines()[-1]
+        while not fpath_state_dict.endswith('model.pth'):
+            fpath_state_dict = fpath_state_dict[:-1]
+else:
+    fpath_state_dict = cfg.state_dict

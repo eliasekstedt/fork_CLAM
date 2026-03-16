@@ -254,3 +254,16 @@ class CLAM_SB(nn.Module):
         else:
             results_dict = {}
         return logits, Y_prob, Y_hat, results_dict
+
+
+from MIL.util import file_it
+def init_model(dpath_run, fpath_state_dict, dropout, device):
+    print('initiating model ...')
+    model = CLAM_SB(dropout)
+
+    if not fpath_state_dict == '':
+        model.load_state_dict(torch.load(fpath_state_dict, map_location='cuda:0'))
+        message = f"model loaded from: {fpath_state_dict}"
+        file_it(dpath_run / 'log.txt', message, True)
+
+    return model.to(device)

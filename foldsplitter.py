@@ -3,23 +3,15 @@ import numpy as np
 import pandas as pd
 
 class FeatureMapSplitter:
-    def __init__(self, fpath_encodingMap, excl_by_id, fpath_fold0, fpath_fold1):
+    def __init__(self, fpath_encodingMap, dpath_milFolds):
         mmap = pd.read_csv(fpath_encodingMap)
-        mmap = mmap[~mmap['slide_id'].isin(excl_by_id)]
         mmap['case_id'] = mmap['slide_id'].apply(self.get_case_id)
-
-        fold_0, fold_1 = self.split_kfold(mmap)
-        fold_0.to_csv(fpath_fold0, index=False)
-        fold_1.to_csv(fpath_fold1, index=False)
-        fold_0_label_0_ratio = 1 - (fold_0['label'].sum() / fold_0.shape[0])
-        
-        print(f"label 0 ratio: {fold_0_label_0_ratio}")
-        self.label0_ratio = fold_0_label_0_ratio
+        self.split_kfold(mmap, dpath_milFolds)
 
     def get_case_id(self, slide_id):
         return re.match(r"([^_]+)", slide_id).group(1)
     
-    def split_kfold(self, mmap, k=5):
+    def split_kfold(self, mmap, dpath_milFolds, k=6):
         def score_fold(fold, dcol_names):
             as_array = fold[dcol_names].to_numpy()
             return np.sum(np.sum(as_array, axis=0) ** 2).item()
@@ -65,7 +57,7 @@ class FeatureMapSplitter:
         fmap = create_balanced_splits(
             df=dmap[[jcol_name] + dcol_names],
             dcol_names=dcol_names,
-            k=5,
+            k=k,
         )
 
         keep_cols = [col for col in fmap.columns if not any(col.startswith(char) for char in ['mod_', 'age_', 'isup_'])]
@@ -75,10 +67,12 @@ class FeatureMapSplitter:
             fold_id = row['fold_id']
             mmap.loc[mmap['case_id']==case_id, 'fold_id'] = fold_id
 
-        fold_0 = mmap[mmap['fold_id'] < 4]
-        fold_1 = mmap[~mmap['fold_id'].isin(fold_0['fold_id'])]
-        fold_0 = fold_0.drop(columns=['fold_id'])
-        fold_1 = fold_1.drop(columns=['fold_id'])
-        #print(fold_0['psa'].std(), fold_1['psa'].std())
-        #print(fold_0['isup'].std(), fold_1['isup'].std())
-        return fold_0.sample(frac=1), fold_1.sample(frac=1)
+        fold_indices = fmap['fold_id'].unique()
+        for idx in fold_indices:
+            fpath_fold = dpath_milFolds / f'fold_{idx}.csv'
+            fold = mmap[mmap['fold_id'] == idx]
+            fold = fold.sample(frac=1)
+            fold = fold.reset_index(drop=True)
+            fold = fold.drop(columns=['fold_id'])
+            fold.to_csv(fpath_fold, index=False)
+            print(f"fold_{idx}| psa: {fold['psa'].std()}, isup: {fold['isup'].std()}")

@@ -5,8 +5,9 @@ do_generate_coords = False
 do_qualVal = False
 do_patch_quality_check = False
 do_feature_extraction = False
-do_foldsplitting = True
+do_foldsplitting = False
 do_mil = True
+do_crossval = True
 
 if __name__ == '__main__':
     if do_generate_coords:
@@ -92,8 +93,7 @@ if __name__ == '__main__':
         from foldsplitter import FeatureMapSplitter
         FeatureMapSplitter(
             fpath_encodingMap=cfg.fpath_encodingMap,
-            fpath_fold0=cfg.fpath_fold0,
-            fpath_fold1=cfg.fpath_fold1,
+            dpath_milFolds=cfg.dpath_milFolds,
         )
     
     if do_mil:
@@ -101,21 +101,28 @@ if __name__ == '__main__':
         Trains the CLAM-classifier on the bags of feature vectors
         that represents the slides.
         """
-        if cfg.state_dict == 'history': # if true, select most recent model
-            with open(f"run/history/history.txt", 'r') as file:
-                fpath_state_dict = file.readlines()[-1]
-                while not fpath_state_dict.endswith('model.pth'):
-                    fpath_state_dict = fpath_state_dict[:-1]
-        else:
-            fpath_state_dict = cfg.state_dict
-
         from pbo_mil_trainer import MilTrainWrapper
         wrapper = MilTrainWrapper(
             dpath_ptFeature=cfg.dpath_ptFeature,
-            fpath_fold0=cfg.fpath_fold0,
-            fpath_fold1=cfg.fpath_fold1,
+            dpath_milfolds=cfg.dpath_milfolds,
+            testfold_name=cfg.holdout_fold_name,
             hparam=cfg.hparam,
             fpath_state_dict=fpath_state_dict,
             tag=cfg.tag,
+            device='cuda:0',
+        )
+
+    if do_crossval:
+        with open(f"run/history/history.txt", 'r') as file:
+            record = Path(file.readlines()[-1])
+        tag = record.parts[record.parts.index('run') + 1]
+
+        from evaluator import Evaluator
+        Evaluator(
+            dpath_milfolds=cfg.dpath_milfolds,
+            dpath_ptFeature=cfg.dpath_ptFeature,
+            testfold_name=cfg.holdout_fold_name,
+            hparam=cfg.hparam,
+            tag=tag,
             device='cuda:0',
         )
