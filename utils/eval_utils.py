@@ -1,3 +1,4 @@
+"""
 import numpy as np
 
 import torch
@@ -116,3 +117,5 @@ def summary(model, loader, args):
         results_dict.update({'p_{}'.format(c): all_probs[:,c]})
     df = pd.DataFrame(results_dict)
     return patient_results, test_error, auc_score, df, acc_logger
+
+"""

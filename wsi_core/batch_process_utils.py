@@ -1,3 +1,4 @@
+"""
 import pandas as pd
 import numpy as np
 import pdb
@@ -80,3 +81,4 @@ def initialize_df(slides, seg_params, filter_params, vis_params, patch_params,
 		slides = pd.DataFrame(default_df_dict)
 	
 	return slides
+"""

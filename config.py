@@ -1,21 +1,27 @@
 
 from pathlib import Path
+from types import SimpleNamespace
+cfg = SimpleNamespace()
 
 def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
 
-### only path need specifying ###
+### only paths need specifying ###
 
 wsi_origin = '../CLAM/data0_mrxs/'
 
-#################################
+######### define steps ###########
+cfg.do_coord_search = False
+cfg.do_quality_check = False
+cfg.do_patch_quality_vis = False
+cfg.do_feature_extraction = False
+cfg.do_foldsplitting = False
+cfg.do_mil = False
+cfg.do_crossval = False
+##################################
 
-
-from types import SimpleNamespace
-cfg = SimpleNamespace()
 cfg.dpath_wsiRoot = Path(wsi_origin)
-
 cfg.dpath_csvRoot = Path('csv/')
 cfg.dpath_qualityLog = cfg.dpath_csvRoot / 'quality_log'
 cfg.dpath_milfolds = cfg.dpath_csvRoot / 'milFolds'
@@ -96,7 +102,7 @@ cfg.hparam = {
     'batch_size':1,
     'learning_rate':1e-3,
     'weight_decay':5e-5,
-    'nr_epochs':3,
+    'nr_epochs':30,
 }
 
 cfg.state_dict = ''

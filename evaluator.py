@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from MIL.reader import MILReader
 from MIL.util import file_it
-from pbo_mil_model import init_model
+from MIL.model import init_model
 
 
 class Evaluator:

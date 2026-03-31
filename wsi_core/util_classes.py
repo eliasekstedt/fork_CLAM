@@ -1,8 +1,10 @@
-import os
+
+#import os
 import numpy as np
 from PIL import Image
-import pdb
-import cv2
+#import pdb
+#import cv2
+
 class Mosaic_Canvas(object):
 	def __init__(self,patch_size=256, n=100, downscale=4, n_per_row=10, bg_color=(0,0,0), alpha=-1):
 		self.patch_size = patch_size
@@ -45,6 +47,7 @@ class Mosaic_Canvas(object):
 	def get_painting(self):
 		return self.canvas
 
+"""
 class Contour_Checking_fn(object):
 	# Defining __call__ method 
 	def __call__(self, pt): 
@@ -109,6 +112,7 @@ class isInContourV3_Hard(Contour_Checking_fn):
 			if cv2.pointPolygonTest(self.cont, tuple(np.array(points).astype(float)), False) < 0:
 				return 0
 		return 1
+"""
 
 
 

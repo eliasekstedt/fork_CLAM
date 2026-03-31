@@ -1,3 +1,4 @@
+"""
 # modified from Pytorch official resnet.py
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
@@ -108,10 +109,9 @@ class ResNet_Baseline(nn.Module):
         return x
 
 def resnet50_baseline(pretrained=False):
-    """Constructs a Modified ResNet-50 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
+    #Constructs a Modified ResNet-50 model.
+    #Args:
+    #    pretrained (bool): If True, returns a model pre-trained on ImageNet
     model = ResNet_Baseline(Bottleneck_Baseline, [3, 4, 6, 3])
     if pretrained:
         model = load_pretrained_weights(model, 'resnet50')
@@ -122,4 +122,5 @@ def load_pretrained_weights(model, name):
     model.load_state_dict(pretrained_dict, strict=False)
     return model
 
+"""
 

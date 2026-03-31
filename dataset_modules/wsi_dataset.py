@@ -1,4 +1,4 @@
-
+"""
 import numpy as np
 from torch.utils.data import Dataset
 from wsi_core.util_classes import isInContourV1, isInContourV2, isInContourV3_Easy, isInContourV3_Hard
@@ -105,3 +105,4 @@ class Wsi_Region(Dataset):
             patch = patch.resize(self.target_patch_size)
         patch = self.transforms(patch).unsqueeze(0)
         return patch, coord 
+"""

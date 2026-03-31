@@ -1,3 +1,4 @@
+"""
 import numpy as np
 import torch
 from utils.utils import *
@@ -12,7 +13,7 @@ from sklearn.metrics import auc as calc_auc
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Accuracy_Logger(object):
-    """Accuracy logger"""
+    ###Accuracy logger###
     def __init__(self, n_classes):
         super().__init__()
         self.n_classes = n_classes
@@ -47,16 +48,14 @@ class Accuracy_Logger(object):
         return acc, correct, count
 
 class EarlyStopping:
-    """Early stops the training if validation loss doesn't improve after a given patience."""
+    ###Early stops the training if validation loss doesn't improve after a given patience.
     def __init__(self, patience=20, stop_epoch=50, verbose=False):
-        """
-        Args:
-            patience (int): How long to wait after last time validation loss improved.
-                            Default: 20
-            stop_epoch (int): Earliest epoch possible for stopping
-            verbose (bool): If True, prints a message for each validation loss improvement. 
-                            Default: False
-        """
+        #Args:
+        #    patience (int): How long to wait after last time validation loss improved.
+        #                    Default: 20
+        #    stop_epoch (int): Earliest epoch possible for stopping
+        #    verbose (bool): If True, prints a message for each validation loss improvement. 
+        #                    Default: False
         self.patience = patience
         self.stop_epoch = stop_epoch
         self.verbose = verbose
@@ -440,6 +439,7 @@ def train(datasets, cur, args):
         writer.close()
     return results_dict, test_auc, val_auc, 1-test_error, 1-val_error 
 
+"""
 """
 def train_loop(epoch, model, loader, optimizer, n_classes, writer = None, loss_fn = None):   
     model.train()

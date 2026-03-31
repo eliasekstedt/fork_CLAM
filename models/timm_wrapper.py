@@ -1,3 +1,4 @@
+"""
 import torch
 import timm
 
@@ -22,3 +23,4 @@ class TimmCNNEncoder(torch.nn.Module):
         if self.pool:
             out = self.pool(out).squeeze(-1).squeeze(-1)
         return out
+"""

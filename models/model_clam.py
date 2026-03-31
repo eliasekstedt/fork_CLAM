@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import pdb
+#import pdb
 
 """
 Attention Network without Gating (2 fc layers)
@@ -181,6 +181,7 @@ class CLAM_SB(nn.Module):
             results_dict.update({'features': M})
         return logits, Y_prob, Y_hat, A_raw, results_dict
 
+"""
 class CLAM_MB(CLAM_SB):
     def __init__(self, gate = True, size_arg = "small", dropout = 0., k_sample=8, n_classes=2,
         instance_loss_fn=nn.CrossEntropyLoss(), subtyping=False, embed_dim=1024):
@@ -251,3 +252,4 @@ class CLAM_MB(CLAM_SB):
         if return_features:
             results_dict.update({'features': M})
         return logits, Y_prob, Y_hat, A_raw, results_dict
+"""

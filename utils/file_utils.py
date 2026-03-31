@@ -1,3 +1,4 @@
+"""
 import pickle
 import h5py
 
@@ -32,3 +33,4 @@ def save_hdf5(output_path, asset_dict, attr_dict= None, mode='a', chunk_size=32)
                 dset.resize(len(dset) + data_shape[0], axis=0)
                 dset[-data_shape[0]:] = val
     return output_path
+"""

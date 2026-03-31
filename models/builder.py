@@ -1,3 +1,4 @@
+"""
 import os
 from functools import partial
 import timm
@@ -72,3 +73,4 @@ def get_encoder(model_name, target_img_size=224):
                                          target_img_size = target_img_size)
 
     return model, img_transforms
+"""

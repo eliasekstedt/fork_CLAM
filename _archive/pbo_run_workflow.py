@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
 
     if do_generate_patches:
-        from find_coords import PatchCoordMapper # coord finder
+        from coord_search.coord_search import PatchCoordMapper # coord finder
         patchset_generator = PatchCoordMapper(
             dpath_mrxs=cfg.dpath_mrxsRoot,
             dpath_patchRoot=cfg.dpath_patchRoot,
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         )
 
     if do_classifier_training:
-        from pbo_mil_trainer import MilTrainWrapper
+        from MIL.trainer import MilTrainWrapper
         """
         why does the train epoch factor in instance loss in loss calculation but not val epoch?
         """

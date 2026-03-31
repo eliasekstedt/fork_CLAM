@@ -1,3 +1,4 @@
+"""
 import numpy as np
 import torch
 import torch.nn as nn
@@ -99,3 +100,4 @@ def compute_from_patches(wsi_object, img_transforms, feature_extractor=None, cla
 
         mode = "a"
     return attn_save_path, feat_save_path, wsi_object
+"""

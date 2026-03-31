@@ -2,10 +2,10 @@ import os
 import torch
 import numpy as np
 import pandas as pd
-import math
-import re
-import pdb
-import pickle
+#import math
+#import re
+#import pdb
+#import pickle
 from scipy import stats
 
 from torch.utils.data import Dataset
@@ -13,6 +13,7 @@ import h5py
 
 from utils.utils import generate_split, nth
 
+"""
 def save_splits(split_datasets, column_keys, filename, boolean_style=False):
 	splits = [split_datasets[i].slide_data['slide_id'] for i in range(len(split_datasets))]
 	if not boolean_style:
@@ -27,7 +28,8 @@ def save_splits(split_datasets, column_keys, filename, boolean_style=False):
 
 	df.to_csv(filename)
 	print()
-
+"""
+"""
 class Generic_WSI_Classification_Dataset(Dataset):
 	def __init__(self,
 		csv_path = 'dataset_csv/ccrcc_clean.csv',
@@ -41,15 +43,15 @@ class Generic_WSI_Classification_Dataset(Dataset):
 		label_col = None,
 		patient_voting = 'max',
 		):
-		"""
-		Args:
-			csv_file (string): Path to the csv file with annotations.
-			shuffle (boolean): Whether to shuffle
-			seed (int): random seed for shuffling the data
-			print_info (boolean): Whether to print a summary of the dataset
-			label_dict (dict): Dictionary with key, value pairs for converting str labels to int
-			ignore (list): List containing class labels to ignore
-		"""
+
+		#Args:
+		#	csv_file (string): Path to the csv file with annotations.
+		#	shuffle (boolean): Whether to shuffle
+		#	seed (int): random seed for shuffling the data
+		#	print_info (boolean): Whether to print a summary of the dataset
+		#	label_dict (dict): Dictionary with key, value pairs for converting str labels to int
+		#	ignore (list): List containing class labels to ignore
+
 		self.label_dict = label_dict
 		self.num_classes = len(set(self.label_dict.values()))
 		self.seed = seed
@@ -311,8 +313,9 @@ class Generic_WSI_Classification_Dataset(Dataset):
 		df_t = pd.DataFrame({'test': test_split})
 		df = pd.concat([df_tr, df_v, df_t], axis=1) 
 		df.to_csv(filename, index = False)
+"""
 
-
+"""
 class Generic_MIL_Dataset(Generic_WSI_Classification_Dataset):
 	def __init__(self,
 		data_dir, 
@@ -366,6 +369,7 @@ class Generic_Split(Generic_MIL_Dataset):
 
 	def __len__(self):
 		return len(self.slide_data)
+"""
 		
 
 

@@ -1,12 +1,13 @@
 import h5py
 import numpy as np
-import os
-import pdb
+#import os
+#import pdb
 from wsi_core.util_classes import Mosaic_Canvas
 from PIL import Image
-import math
+#import math
 import cv2
-from tqdm import tqdm
+#from tqdm import tqdm
+'''
 
 def isWhitePatch(patch, satThresh=5):
     patch_hsv = cv2.cvtColor(patch, cv2.COLOR_RGB2HSV)
@@ -173,10 +174,11 @@ def sample_rois(scores, coords, k=5, mode='range_sample', seed=1, score_start=0.
 
     asset = {'sampled_coords': coords, 'sampled_scores': scores}
     return asset
-
+'''
 def DrawGrid(img, coord, shape, thickness=2, color=(0,0,0,255)):
     cv2.rectangle(img, tuple(np.maximum([0, 0], coord-thickness//2)), tuple(coord - thickness//2 + np.array(shape)), (0, 0, 0, 255), thickness=thickness)
     return img
+'''
 
 def DrawMap(canvas, patch_dset, coords, patch_size, indices=None, verbose=1, draw_grid=True):
     if indices is None:
@@ -201,7 +203,7 @@ def DrawMap(canvas, patch_dset, coords, patch_size, indices=None, verbose=1, dra
             DrawGrid(canvas, coord, patch_size)
 
     return Image.fromarray(canvas)
-
+'''
 def DrawMapFromCoords(canvas, wsi_object, coords, patch_size, vis_level, indices=None, draw_grid=True):
     downsamples = wsi_object.wsi.level_downsamples[vis_level]
     if indices is None:
@@ -224,6 +226,7 @@ def DrawMapFromCoords(canvas, wsi_object, coords, patch_size, vis_level, indices
 
     return Image.fromarray(canvas)
 
+'''
 def StitchPatches(hdf5_file_path, downscale=16, draw_grid=False, bg_color=(0,0,0), alpha=-1):
     with h5py.File(hdf5_file_path, 'r') as file:
         dset = file['imgs']
@@ -255,7 +258,7 @@ def StitchPatches(hdf5_file_path, downscale=16, draw_grid=False, bg_color=(0,0,0
     heatmap = DrawMap(heatmap, dset, coords, downscaled_shape, indices=None, draw_grid=draw_grid)
     
     return heatmap
-
+'''
 def StitchCoords(hdf5_file_path, wsi_object, downscale=16, draw_grid=False, bg_color=(0,0,0), alpha=-1):
     wsi = wsi_object.getOpenSlide()
     w, h = wsi.level_dimensions[0]
@@ -289,6 +292,7 @@ def StitchCoords(hdf5_file_path, wsi_object, downscale=16, draw_grid=False, bg_c
     heatmap = DrawMapFromCoords(heatmap, wsi_object, coords, patch_size, vis_level, indices=None, draw_grid=draw_grid)
     return heatmap
 
+'''
 def SamplePatches(coords_file_path, save_file_path, wsi_object, 
     patch_level=0, custom_downsample=1, patch_size=256, sample_num=100, seed=1, stitch=True, verbose=1, mode='w'):
     
@@ -338,3 +342,4 @@ def SamplePatches(coords_file_path, save_file_path, wsi_object,
         mode='a'
 
     return canvas, len(coords), len(indices)
+'''
