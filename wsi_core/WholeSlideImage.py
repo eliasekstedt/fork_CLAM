@@ -8,8 +8,10 @@ import numpy as np
 import openslide
 from PIL import Image
 import math
-from wsi_core.wsi_utils import savePatchIter_bag_hdf5, initialize_hdf5_bag, save_hdf5, screen_coords, isBlackPatch, isWhitePatch, to_percentiles #,coord_generator, sample_indices, 
+#from wsi_core.wsi_utils import savePatchIter_bag_hdf5, initialize_hdf5_bag, save_hdf5, screen_coords, isBlackPatch, isWhitePatch, to_percentiles #,coord_generator, sample_indices, 
+from wsi_core.wsi_utils import save_hdf5#, savePatchIter_bag_hdf5, initialize_hdf5_bag, screen_coords, isBlackPatch, isWhitePatch, to_percentiles #,coord_generator, sample_indices, 
 #from wsi_core.util_classes import isInContourV1, isInContourV2, isInContourV3_Easy, isInContourV3_Hard, Contour_Checking_fn
+from wsi_core.util_classes import isInContourV3_Easy#, isInContourV3_Hard, Contour_Checking_fn
 #from utils.file_utils import load_pkl, save_pkl
 #import time
 #import xml.etree.ElementTree as ET

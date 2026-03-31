@@ -5,13 +5,13 @@ from wsi_core.wsi_utils import StitchCoords
 from tqdm import tqdm
 import pandas as pd
 
-class CoordGenerator:
-	def __init__(self, dpath_wsiRoot, dpath_wsiCoordRoot, dpath_wsiCoord,
+class CoordFinder:
+	def __init__(self, dpath_wsiRoot, dpath_wsiCoordRoot, dpath_wsiCoords,
 		dpath_mask, dpath_stitch, fpath_segmParam, fpath_segmlog,
 	):
 		self.dpath_wsiRoot = dpath_wsiRoot
 		self.dpath_patchRoot = dpath_wsiCoordRoot
-		self.dpath_coord = dpath_wsiCoord
+		self.dpath_coords = dpath_wsiCoords
 		self.dpath_mask = dpath_mask
 		self.dpath_stitch = dpath_stitch
 		#segm params
@@ -26,7 +26,9 @@ class CoordGenerator:
 		self.fpath_segmParam = fpath_segmParam
 		self.fpath_segmlog = fpath_segmlog
 
-	def __call__(self):
+		self.generate()
+
+	def generate(self):
 		if self.fpath_segmlog.is_file():
 			segmlog = pd.read_csv(self.fpath_segmlog)
 		else:
@@ -69,13 +71,13 @@ class CoordGenerator:
 			mask.save(self.dpath_mask / mask_name)
 
 			WSI_object.process_contours(
-				save_path=str(self.dpath_coord),
+				save_path=str(self.dpath_coords),
 				patch_level=self.patch_level,
 				patch_size=self.patch_size,
 				step_size=self.step_size,
 			)
 			
-			fpath_coord = self.dpath_coord / f"{slide_id}.h5"
+			fpath_coord = self.dpath_coords / f"{slide_id}.h5"
 			if fpath_coord.is_file():
 				heatmap = StitchCoords(str(fpath_coord), WSI_object, downscale=64, bg_color=(0,0,0), alpha=-1, draw_grid=False)
 				heatmap.save(self.dpath_stitch / f"{slide_id}.jpg")

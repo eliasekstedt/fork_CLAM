@@ -12,13 +12,11 @@ def create_dirs(*dirpaths):
 wsi_origin = '../CLAM/data0_mrxs/'
 
 ######### define steps ###########
-cfg.do_coord_search = False
-cfg.do_quality_check = False
-cfg.do_patch_quality_vis = False
-cfg.do_feature_extraction = False
-cfg.do_foldsplitting = False
+cfg.do_coord_search = True
+cfg.do_quality_check = True
+cfg.do_encode_patches = False
 cfg.do_mil = False
-cfg.do_crossval = False
+cfg.do_evaluate = False
 ##################################
 
 cfg.dpath_wsiRoot = Path(wsi_origin)

@@ -3,7 +3,7 @@
 import numpy as np
 from PIL import Image
 #import pdb
-#import cv2
+import cv2
 
 class Mosaic_Canvas(object):
 	def __init__(self,patch_size=256, n=100, downscale=4, n_per_row=10, bg_color=(0,0,0), alpha=-1):
@@ -47,7 +47,6 @@ class Mosaic_Canvas(object):
 	def get_painting(self):
 		return self.canvas
 
-"""
 class Contour_Checking_fn(object):
 	# Defining __call__ method 
 	def __call__(self, pt): 
@@ -91,6 +90,7 @@ class isInContourV3_Easy(Contour_Checking_fn):
 				return 1
 		return 0
 
+"""
 # Hard version of 4pt contour checking function - all 4 points need to be in the contour for test to pass
 class isInContourV3_Hard(Contour_Checking_fn):
 	def __init__(self, contour, patch_size, center_shift=0.5):

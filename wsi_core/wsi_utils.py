@@ -52,7 +52,7 @@ def savePatchIter_bag_hdf5(patch):
         coord_dset[-img_shape[0]:] = (x,y)
 
     file.close()
-
+'''
 def save_hdf5(output_path, asset_dict, attr_dict=None, mode='a'):
     #####################
     """
@@ -89,7 +89,7 @@ def save_hdf5(output_path, asset_dict, attr_dict=None, mode='a'):
             dset[-data_shape[0]:] = val
     file.close()
     return output_path
-
+'''
 def initialize_hdf5_bag(first_patch, save_coord=False):
     x, y, cont_idx, patch_level, downsample, downsampled_level_dim, level_dim, img_patch, name, save_path = tuple(first_patch.values())
     file_path = os.path.join(save_path, name)+'.h5'
