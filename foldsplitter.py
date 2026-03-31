@@ -3,15 +3,15 @@ import numpy as np
 import pandas as pd
 
 class FeatureMapSplitter:
-    def __init__(self, fpath_encodingMap, dpath_milFolds):
+    def __init__(self, fpath_encodingMap, dpath_milfolds):
         mmap = pd.read_csv(fpath_encodingMap)
         mmap['case_id'] = mmap['slide_id'].apply(self.get_case_id)
-        self.split_kfold(mmap, dpath_milFolds)
+        self.split_kfold(mmap, dpath_milfolds)
 
     def get_case_id(self, slide_id):
         return re.match(r"([^_]+)", slide_id).group(1)
     
-    def split_kfold(self, mmap, dpath_milFolds, k=6):
+    def split_kfold(self, mmap, dpath_milfolds, k=6):
         def score_fold(fold, dcol_names):
             as_array = fold[dcol_names].to_numpy()
             return np.sum(np.sum(as_array, axis=0) ** 2).item()
@@ -69,7 +69,7 @@ class FeatureMapSplitter:
 
         fold_indices = fmap['fold_id'].unique()
         for idx in fold_indices:
-            fpath_fold = dpath_milFolds / f'fold_{idx}.csv'
+            fpath_fold = dpath_milfolds / f'fold_{idx}.csv'
             fold = mmap[mmap['fold_id'] == idx]
             fold = fold.sample(frac=1)
             fold = fold.reset_index(drop=True)

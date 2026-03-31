@@ -8,7 +8,7 @@ from datetime import datetime
 
 from MIL.reader import MILReader
 from MIL.util import file_it, plot_performance
-from pbo_mil_model import init_model
+from mil_model import init_model
 
 class MILTrainer:
     def __init__(self, model, lr, lf_weights, weight_decay, train_ap, val_ap, device):
@@ -100,15 +100,15 @@ class MILTrainer:
         )
         
         #epoch_score = self.valcost[-1] * (1 - self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
-        epoch_score = 1 / ((self.val_pp[-1] - self.val_ap)**2 / self.val_ap + 1) * self.val_tp[-1] / (self.val_pp[-1] + 1e-8)
-        #print('ap: {}\npp: {}\nr: {}\nscore: {}|{}'.format(self.val_ap, self.val_pp[-1], self.val_tp[-1] / (self.val_pp[-1] + 1e-8), epoch_score, self.current_best))
-        if self.current_best is None or self.current_best <= epoch_score: #self.valcost[-1]: # early stopping protocol
+        #epoch_score = 1 / ((self.val_pp[-1] - self.val_ap)**2 / self.val_ap + 1) * self.val_tp[-1] / (self.val_pp[-1] + 1e-8)
+        epoch_score = self.valcost[-1]
+        if self.current_best is None or self.current_best >= epoch_score: 
             self.current_best = epoch_score
             fpath_model = dpath_run / "model.pth"
             record_history(fpath_model)
             torch.save(self.model.state_dict(), fpath_model)
             epoch_info = f'{epoch_info} saved!'
-            
+
         if len(self.valcost) <= 1:
             file_it(dpath_run / 'log.txt', '\n' + header, False)
         file_it(dpath_run/ "log.txt", epoch_info, True)
@@ -173,9 +173,9 @@ class MilTrainWrapper:
 
             train_actual_pos, val_actual_pos = counts_0[1].item(), counts_1[1].item()
             logmore = {
-                'nr_+_train/val':loader_0.dataset.map['label'].value_counts().tolist(),
+                'nr_pos_trn/val':loader_0.dataset.map['label'].value_counts().tolist(),
                 'lf_weights':lf_weights.numpy(),
-                'ap_train/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}",
+                'actl.pos_trn/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}",
             }
             
             dpath_run = self.init_run(hparam, logmore, tag, device, k)
@@ -225,20 +225,6 @@ class MilTrainWrapper:
             for_terminal = file.read()
         print(for_terminal)
         return dpath_run
-
-    """
-    def init_model(self, dpath_run, fpath_state_dict, dropout, device):
-        print('initiating model ...')
-        from pbo_mil_model import CLAM_SB
-        model = CLAM_SB(dropout)
-
-        if not fpath_state_dict == '':
-            model.load_state_dict(torch.load(fpath_state_dict, map_location='cuda:0'))
-            message = f"model loaded from: {fpath_state_dict}"
-            file_it(dpath_run / 'log.txt', message, True)
-
-        return model.to(device)
-    """
     
     def learn_parameters(self, dpath_run, loader_0, loader_1, model,
         nr_epochs, lr, lf_weights, weight_decay, train_ap, val_ap,

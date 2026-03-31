@@ -32,7 +32,7 @@ class Evaluator:
         )
 
         df_eval = self.evaluate(dpath_tag, fpaths_models, hparam['dropout'], loader, device)
-        self.get_stats(dpath_tag, df_eval)
+        self.get_stats(dpath_tag, df_eval, hparam['dropout'])
 
     def evaluate(self, dpath_tag, fpaths_models, dropout, testloader, device):
         df_eval = []
@@ -56,10 +56,10 @@ class Evaluator:
                     })
 
         df_eval = pd.DataFrame(df_eval)
-        #df_eval.to_csv(dpath_tag / 'df_eval.csv', index=False)
+        df_eval.to_csv(dpath_tag / 'df_eval.csv', index=False)
         return df_eval
 
-    def get_stats(self, dpath_tag, df_eval):
+    def get_stats(self, dpath_tag, df_eval, dropout):
         pred_vote = df_eval.groupby(by=['bag_id'])['pred'].mean()
         label_vote = df_eval.groupby(by=['bag_id'])['label'].mean()
         stats = pd.DataFrame(pred_vote).merge(label_vote.astype(int), on='bag_id').reset_index(drop=False)
@@ -70,10 +70,11 @@ class Evaluator:
         n_FN = stats[(stats['label'] == 1) & (stats['final_pred'] == 0)].shape[0]
         n_FP = stats[(stats['label'] == 0) & (stats['final_pred'] == 1)].shape[0]
         tot = stats.shape[0]
-        message = 'TP: {},\nTN: {},\nFN: {},\nFP: {},\ntot: {}'.format(
-            n_TP, n_TN, n_FN, n_FP, tot
+        message = 'dropout: {}| TP: {}, TN: {}, FN: {}, FP: {}, tot: {}'.format(
+            dropout, n_TP, n_TN, n_FN, n_FP, tot
         )
-        fpath_stats = dpath_tag / 'stats.txt'
+
+        fpath_stats = Path('run/stats.txt')
         file_it(file_name=fpath_stats, message=message, to_terminal=True)
         stats.to_csv(dpath_tag / 'stats.csv', index=False)
     

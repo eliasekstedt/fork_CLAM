@@ -5,7 +5,7 @@ do_generate_coords = False
 do_qualVal = False
 do_patch_quality_check = False
 do_feature_extraction = False
-do_foldsplitting = False
+do_foldsplitting = True
 do_mil = True
 do_crossval = True
 
@@ -90,18 +90,19 @@ if __name__ == '__main__':
         is done in a way that balances patient properties like age
         and psa.
         """
+
         from foldsplitter import FeatureMapSplitter
         FeatureMapSplitter(
             fpath_encodingMap=cfg.fpath_encodingMap,
-            dpath_milFolds=cfg.dpath_milFolds,
+            dpath_milfolds=cfg.dpath_milfolds,
         )
-    
+
     if do_mil:
         """
         Trains the CLAM-classifier on the bags of feature vectors
         that represents the slides.
         """
-        from pbo_mil_trainer import MilTrainWrapper
+        from mil_trainer import MilTrainWrapper
         wrapper = MilTrainWrapper(
             dpath_ptFeature=cfg.dpath_ptFeature,
             dpath_milfolds=cfg.dpath_milfolds,

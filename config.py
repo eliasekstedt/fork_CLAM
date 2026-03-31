@@ -1,12 +1,15 @@
 
 from pathlib import Path
 
-
 def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
 
+### only path need specifying ###
+
 wsi_origin = '../CLAM/data0_mrxs/'
+
+#################################
 
 
 from types import SimpleNamespace
@@ -17,7 +20,6 @@ cfg.dpath_csvRoot = Path('csv/')
 cfg.dpath_qualityLog = cfg.dpath_csvRoot / 'quality_log'
 cfg.dpath_milfolds = cfg.dpath_csvRoot / 'milFolds'
 cfg.holdout_fold_name = 'fold_0.csv'
-
 
 cfg.dpath_dataRoot = Path('data/')
 
@@ -61,8 +63,6 @@ cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
 cfg.fpath_encodingMap = cfg.dpath_csvRoot / 'encoding_map.csv'
 cfg.fpath_patchProperties = cfg.dpath_patchControl / 'patchProperties.png'
 cfg.fpath_perSlideInfo = cfg.dpath_patchControl / 'per_slide_info.csv'
-#cfg.fpath_fold0 = cfg.dpath_milFolds / 'fold0.csv'
-#cfg.fpath_fold1 = cfg.dpath_milFolds / 'fold1.csv'
 
 cfg.fltr_params = {
     'bg':0.5,
@@ -71,7 +71,6 @@ cfg.fltr_params = {
 
 # feauture extraction
 cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
-
 cfg.X_batch_size = 512 # best kept small for appropriate randomization, aka even bag size per slide
 cfg.X_patch_size = 224
 cfg.target_bag_size = 2500
@@ -85,26 +84,19 @@ cfg.Xaugm = {
 from datetime import datetime
 current = datetime.now()
 
-n_epochs = 120
-cfg.tag = f'E{n_epochs}' + '_{}_{}_{}_{}'.format(
+n_epochs = 3
+tag_name = 'unspecified_run'
+cfg.tag = f'{tag_name}' + '_{}_{}_{}_{}'.format(
     str(current)[8:10], str(current)[11:13],
     str(current)[14:16], str(current)[17:19],
 )
-"""
-cfg.hparam = {
-    'dropout':0.25,
-    'batch_size':1,
-    'learning_rate':1e-4,
-    'weight_decay':5e-3,
-    'nr_epochs':120,
-}
-"""
+
 cfg.hparam = {
     'dropout':0.5,
     'batch_size':1,
     'learning_rate':1e-3,
     'weight_decay':5e-5,
-    'nr_epochs':n_epochs,
+    'nr_epochs':3,
 }
 
 cfg.state_dict = ''
