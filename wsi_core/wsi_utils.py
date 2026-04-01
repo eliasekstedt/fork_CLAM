@@ -54,22 +54,6 @@ def savePatchIter_bag_hdf5(patch):
     file.close()
 '''
 def save_hdf5(output_path, asset_dict, attr_dict=None, mode='a'):
-    #####################
-    """
-    print('now in save_hdf5')
-    print(output_path)
-    print('asset_dict') # list of coordinate pairs
-    for key in asset_dict.keys():
-        print(key, asset_dict[key])
-    print('\nattr_dict') # list of coordinate pairs (seemigly same as asset_dict)
-    if not attr_dict:
-        print(attr_dict)
-    else:
-        for key in asset_dict.keys():
-            print(key, asset_dict[key])
-    #raise SystemExit
-    """
-    #####################
     file = h5py.File(output_path, mode)
     for key, val in asset_dict.items():
         data_shape = val.shape

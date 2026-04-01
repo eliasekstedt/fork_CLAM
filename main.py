@@ -34,7 +34,7 @@ if __name__ == '__main__':
         )
 
         """
-        Produces files for verification of propper patch extraction,
+        Produces files for verification of proper patch extraction,
         e.g no patch overlap or missing space and samples to show
         rejected vs accepted patches given set filtering parameters.
         """
@@ -74,7 +74,7 @@ if __name__ == '__main__':
             dpath_sampleFltrpassed=cfg.dpath_sampleFltrpassed,
         )
 
-    if len(list(cfg.dpath_milfolds.iterdir())) > 0:
+    if len(list(cfg.dpath_milfolds.iterdir())) == 0:
         """
         Splits the slides into training and validation data. this
         is done in a way that balances patient properties like age
@@ -89,7 +89,8 @@ if __name__ == '__main__':
     if cfg.do_mil:
         """
         Trains the CLAM-classifier on the bags of feature vectors
-        that represents the slides.
+        that represent the slides. trains one model for every
+        defined fold except the holdout.
         """
         from do_MIL.trainer import MilTrainWrapper
         wrapper = MilTrainWrapper(
@@ -103,6 +104,10 @@ if __name__ == '__main__':
         )
 
     if cfg.do_evaluate:
+        """
+        evaluates models trained in the previous step on the holdout
+        through cross-validation.
+        """
         with open(f"run/history/history.txt", 'r') as file:
             record = Path(file.readlines()[-1])
         tag = record.parts[record.parts.index('run') + 1]

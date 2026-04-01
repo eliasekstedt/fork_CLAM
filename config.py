@@ -7,16 +7,16 @@ def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
 
-### only paths need specifying ###
+### only path need specifying ###
 
 wsi_origin = '../CLAM/data0_mrxs/'
 
 ######### define steps ###########
-cfg.do_coord_search = True
-cfg.do_quality_check = True
+cfg.do_coord_search = False
+cfg.do_quality_check = False
 cfg.do_encode_patches = False
-cfg.do_mil = False
-cfg.do_evaluate = False
+cfg.do_mil = True
+cfg.do_evaluate = True
 ##################################
 
 cfg.dpath_wsiRoot = Path(wsi_origin)

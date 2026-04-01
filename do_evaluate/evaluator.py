@@ -3,9 +3,9 @@ from pathlib import Path
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
-from MIL.reader import MILReader
-from MIL.util import file_it
-from MIL.model import init_model
+from do_MIL.reader import MILReader
+from do_MIL.util import file_it
+from do_MIL.model import init_model
 
 
 class Evaluator:

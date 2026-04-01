@@ -144,7 +144,7 @@ class CLAM_SB(nn.Module):
         return logits, Y_prob, Y_hat, results_dict
 
 
-from MIL.util import file_it
+from do_MIL.util import file_it
 def init_model(dpath_run, fpath_state_dict, dropout, device):
     print('initiating model ...')
     model = CLAM_SB(dropout)

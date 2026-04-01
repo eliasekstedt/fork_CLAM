@@ -1,7 +1,7 @@
-"""
-import pickle
+#import pickle
 import h5py
 
+"""
 def save_pkl(filename, save_object):
 	writer = open(filename,'wb')
 	pickle.dump(save_object, writer)
@@ -12,8 +12,7 @@ def load_pkl(filename):
 	file = pickle.load(loader)
 	loader.close()
 	return file
-
-
+"""
 def save_hdf5(output_path, asset_dict, attr_dict= None, mode='a', chunk_size=32):
     with h5py.File(output_path, mode) as file:
         for key, val in asset_dict.items():
@@ -33,4 +32,3 @@ def save_hdf5(output_path, asset_dict, attr_dict= None, mode='a', chunk_size=32)
                 dset.resize(len(dset) + data_shape[0], axis=0)
                 dset[-data_shape[0]:] = val
     return output_path
-"""

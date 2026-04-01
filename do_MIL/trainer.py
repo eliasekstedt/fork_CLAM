@@ -6,9 +6,9 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from datetime import datetime
 
-from MIL.reader import MILReader
-from MIL.util import file_it, plot_performance
-from MIL.model import init_model
+from do_MIL.reader import MILReader
+from do_MIL.util import file_it, plot_performance
+from do_MIL.model import init_model
 
 class MILTrainer:
     def __init__(self, model, lr, lf_weights, weight_decay, train_ap, val_ap, device):
