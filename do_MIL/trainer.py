@@ -99,8 +99,6 @@ class MILTrainer:
             str(datetime.now())[11:19],
         )
         
-        #epoch_score = self.valcost[-1] * (1 - self.val_tp[-1] / (self.val_pp[-1] + 1e-8))
-        #epoch_score = 1 / ((self.val_pp[-1] - self.val_ap)**2 / self.val_ap + 1) * self.val_tp[-1] / (self.val_pp[-1] + 1e-8)
         epoch_score = self.valcost[-1]
         if self.current_best is None or self.current_best >= epoch_score: 
             self.current_best = epoch_score

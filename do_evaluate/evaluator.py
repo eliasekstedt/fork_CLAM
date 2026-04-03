@@ -7,7 +7,6 @@ from do_MIL.reader import MILReader
 from do_MIL.util import file_it
 from do_MIL.model import init_model
 
-
 class Evaluator:
     def __init__(self, dpath_milfolds, dpath_ptFeature,
             testfold_name, hparam, tag, device
@@ -77,5 +76,3 @@ class Evaluator:
         fpath_stats = Path('run/stats.txt')
         file_it(file_name=fpath_stats, message=message, to_terminal=True)
         stats.to_csv(dpath_tag / 'stats.csv', index=False)
-    
-    

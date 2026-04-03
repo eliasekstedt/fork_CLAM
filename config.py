@@ -12,9 +12,9 @@ def create_dirs(*dirpaths):
 wsi_origin = '../CLAM/data0_mrxs/'
 
 ######### define steps ###########
-cfg.do_coord_search = False
-cfg.do_quality_check = False
-cfg.do_encode_patches = False
+cfg.do_coord_search = True
+cfg.do_quality_check = True
+cfg.do_encode_patches = True
 cfg.do_mil = True
 cfg.do_evaluate = True
 ##################################
@@ -72,6 +72,7 @@ cfg.fltr_params = {
     'bg':0.5,
     'blur':40,
 }
+cfg.dataset_coverage = 0.05
 
 # feauture extraction
 cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'

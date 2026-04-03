@@ -3,21 +3,12 @@ import os
 from xml.dom import minidom
 import multiprocessing as mp
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import openslide
 from PIL import Image
 import math
-#from wsi_core.wsi_utils import savePatchIter_bag_hdf5, initialize_hdf5_bag, save_hdf5, screen_coords, isBlackPatch, isWhitePatch, to_percentiles #,coord_generator, sample_indices, 
-from wsi_core.wsi_utils import save_hdf5#, savePatchIter_bag_hdf5, initialize_hdf5_bag, screen_coords, isBlackPatch, isWhitePatch, to_percentiles #,coord_generator, sample_indices, 
-#from wsi_core.util_classes import isInContourV1, isInContourV2, isInContourV3_Easy, isInContourV3_Hard, Contour_Checking_fn
-from wsi_core.util_classes import isInContourV3_Easy#, isInContourV3_Hard, Contour_Checking_fn
-#from utils.file_utils import load_pkl, save_pkl
-#import time
-#import xml.etree.ElementTree as ET
-#import pdb
-#import h5py
-#import itertools
+from wsi_core.wsi_utils import save_hdf5
+from wsi_core.util_classes import isInContourV3_Easy
 
 Image.MAX_IMAGE_PIXELS = 933120000
 
@@ -70,17 +61,6 @@ class WholeSlideImage(object):
             annot = eval(annot)
         self.contours_tumor  = _create_contours_from_dict(annot)
         self.contours_tumor = sorted(self.contours_tumor, key=cv2.contourArea, reverse=True)
-
-    def initSegmentation(self, mask_file):
-        # load segmentation results from pickle file
-        asset_dict = load_pkl(mask_file)
-        self.holes_tissue = asset_dict['holes']
-        self.contours_tissue = asset_dict['tissue']
-
-    def saveSegmentation(self, mask_file):
-        # save segmentation results using pickle
-        asset_dict = {'holes': self.holes_tissue, 'tissue': self.contours_tissue}
-        save_pkl(mask_file, asset_dict)
 
     def segmentTissue(
         self, seg_level, mthresh, close, a_t, a_h, max_holes, ref_patch_size=512,
@@ -218,92 +198,6 @@ class WholeSlideImage(object):
        
         return img
 
-
-    def createPatches_bag_hdf5(self, save_path, patch_level=0, patch_size=256, step_size=256, save_coord=True, **kwargs):
-        contours = self.contours_tissue
-        for idx, cont in enumerate(contours):
-            patch_gen = self._getPatchGenerator(cont, idx, patch_level, save_path, patch_size, step_size, **kwargs)
-            
-            if self.hdf5_file is None:
-                try:
-                    first_patch = next(patch_gen)
-                # empty contour, continue
-                except StopIteration:
-                    continue
-
-                file_path = initialize_hdf5_bag(first_patch, save_coord=save_coord)
-                self.hdf5_file = file_path
-
-            for patch in patch_gen:
-                savePatchIter_bag_hdf5(patch)
-
-        return self.hdf5_file
-
-
-    def _getPatchGenerator(self, cont, cont_idx, patch_level, save_path, patch_size=256, step_size=256, custom_downsample=1,
-        white_black=True, white_thresh=15, black_thresh=50, contour_fn='four_pt', use_padding=True):
-        start_x, start_y, w, h = cv2.boundingRect(cont) if cont is not None else (0, 0, self.level_dim[patch_level][0], self.level_dim[patch_level][1])
-
-        if custom_downsample > 1:
-            assert custom_downsample == 2 
-            target_patch_size = patch_size
-            patch_size = target_patch_size * 2
-            step_size = step_size * 2
-            print("Custom Downsample: {}, Patching at {} x {}, But Final Patch Size is {} x {}".format(custom_downsample, patch_size, patch_size, 
-                target_patch_size, target_patch_size))
-
-        patch_downsample = (int(self.level_downsamples[patch_level][0]), int(self.level_downsamples[patch_level][1]))
-        ref_patch_size = (patch_size*patch_downsample[0], patch_size*patch_downsample[1])
-        
-        step_size_x = step_size * patch_downsample[0]
-        step_size_y = step_size * patch_downsample[1]
-        
-        if isinstance(contour_fn, str):
-            if contour_fn == 'four_pt':
-                cont_check_fn = isInContourV3_Easy(contour=cont, patch_size=ref_patch_size[0], center_shift=0.5)
-            elif contour_fn == 'four_pt_hard':
-                cont_check_fn = isInContourV3_Hard(contour=cont, patch_size=ref_patch_size[0], center_shift=0.5)
-            elif contour_fn == 'center':
-                cont_check_fn = isInContourV2(contour=cont, patch_size=ref_patch_size[0])
-            elif contour_fn == 'basic':
-                cont_check_fn = isInContourV1(contour=cont)
-            else:
-                raise NotImplementedError
-        else:
-            assert isinstance(contour_fn, Contour_Checking_fn)
-            cont_check_fn = contour_fn
-
-        img_w, img_h = self.level_dim[0]
-        if use_padding:
-            stop_y = start_y+h
-            stop_x = start_x+w
-        else:
-            stop_y = min(start_y+h, img_h-ref_patch_size[1])
-            stop_x = min(start_x+w, img_w-ref_patch_size[0])
-
-        count = 0
-        for y in range(start_y, stop_y, step_size_y):
-            for x in range(start_x, stop_x, step_size_x):
-                if not self.isInContours(cont_check_fn, (x,y), self.holes_tissue[cont_idx], ref_patch_size[0]): #point not inside contour and its associated holes
-                    continue    
-                
-                count += 1
-                patch_PIL = self.wsi.read_region((x,y), patch_level, (patch_size, patch_size)).convert('RGB')
-                if custom_downsample > 1:
-                    patch_PIL = patch_PIL.resize((target_patch_size, target_patch_size))
-                
-                if white_black:
-                    if isBlackPatch(np.array(patch_PIL), rgbThresh=black_thresh) or isWhitePatch(np.array(patch_PIL), satThresh=white_thresh): 
-                        continue
-
-                patch_info = {'x':x // (patch_downsample[0] * custom_downsample), 'y':y // (patch_downsample[1] * custom_downsample), 'cont_idx':cont_idx, 'patch_level':patch_level, 
-                'downsample': self.level_downsamples[patch_level], 'downsampled_level_dim': tuple(np.array(self.level_dim[patch_level])//custom_downsample), 'level_dim': self.level_dim[patch_level],
-                'patch_PIL':patch_PIL, 'name':self.name, 'save_path':save_path}
-
-                yield patch_info
-
-        print("patches extracted: {}".format(count))
-
     @staticmethod
     def isInHoles(holes, pt, patch_size):
         for hole in holes:
@@ -357,9 +251,8 @@ class WholeSlideImage(object):
 
         return self.hdf5_file
 
-
     def process_contour(self, cont, contour_holes, patch_level, save_path, patch_size, step_size):
-        contour_fn, use_padding, top_left, bot_right = 'four_pt', True, None, None
+        use_padding, top_left, bot_right = True, None, None
         start_x, start_y, w, h = cv2.boundingRect(cont) if cont is not None else (0, 0, self.level_dim[patch_level][0], self.level_dim[patch_level][1])
 
         patch_downsample = (int(self.level_downsamples[patch_level][0]), int(self.level_downsamples[patch_level][1]))
@@ -388,20 +281,7 @@ class WholeSlideImage(object):
             else:
                 print("Adjusted Bounding Box:", start_x, start_y, w, h)
     
-        if isinstance(contour_fn, str):
-            if contour_fn == 'four_pt':
-                cont_check_fn = isInContourV3_Easy(contour=cont, patch_size=ref_patch_size[0], center_shift=0.5)
-            elif contour_fn == 'four_pt_hard':
-                cont_check_fn = isInContourV3_Hard(contour=cont, patch_size=ref_patch_size[0], center_shift=0.5)
-            elif contour_fn == 'center':
-                cont_check_fn = isInContourV2(contour=cont, patch_size=ref_patch_size[0])
-            elif contour_fn == 'basic':
-                cont_check_fn = isInContourV1(contour=cont)
-            else:
-                raise NotImplementedError
-        else:
-            assert isinstance(contour_fn, Contour_Checking_fn)
-            cont_check_fn = contour_fn
+        cont_check_fn = isInContourV3_Easy(contour=cont, patch_size=ref_patch_size[0], center_shift=0.5)
 
         step_size_x = step_size * patch_downsample[0]
         step_size_y = step_size * patch_downsample[1]
@@ -446,194 +326,6 @@ class WholeSlideImage(object):
             return coord
         else:
             return None
-
-    def visHeatmap(
-        self, scores, coords, vis_level=-1, top_left=None, bot_right=None,
-        patch_size=(256, 256), blank_canvas=False, alpha=0.4, blur=False,
-        overlap=0.0, segment=True, use_holes=True,
-        convert_to_percentiles=False, 
-        binarize=False, thresh=0.5,
-        max_size=None,
-        custom_downsample = 1,
-        cmap='coolwarm'
-    ):
-        """
-        Args:
-            scores (numpy array of float): Attention scores 
-            coords (numpy array of int, n_patches x 2): Corresponding coordinates (relative to lvl 0)
-            vis_level (int): WSI pyramid level to visualize
-            patch_size (tuple of int): Patch dimensions (relative to lvl 0)
-            blank_canvas (bool): Whether to use a blank canvas to draw the heatmap (vs. using the original slide)
-            canvas_color (tuple of uint8): Canvas color
-            alpha (float [0, 1]): blending coefficient for overlaying heatmap onto original slide
-            blur (bool): apply gaussian blurring
-            overlap (float [0 1]): percentage of overlap between neighboring patches (only affect radius of blurring)
-            segment (bool): whether to use tissue segmentation contour (must have already called self.segmentTissue such that 
-                            self.contours_tissue and self.holes_tissue are not None
-            use_holes (bool): whether to also clip out detected tissue cavities (only in effect when segment == True)
-            convert_to_percentiles (bool): whether to convert attention scores to percentiles
-            binarize (bool): only display patches > threshold
-            threshold (float): binarization threshold
-            max_size (int): Maximum canvas size (clip if goes over)
-            custom_downsample (int): additionally downscale the heatmap by specified factor
-            cmap (str): name of matplotlib colormap to use
-        """
-
-        if vis_level < 0:
-            vis_level = self.wsi.get_best_level_for_downsample(32)
-
-        downsample = self.level_downsamples[vis_level]
-        scale = [1/downsample[0], 1/downsample[1]] # Scaling from 0 to desired level
-                
-        if len(scores.shape) == 2:
-            scores = scores.flatten()
-
-        if binarize:
-            if thresh < 0:
-                threshold = 1.0/len(scores)
-                
-            else:
-                threshold =  thresh
-        
-        else:
-            threshold = 0.0
-
-        ##### calculate size of heatmap and filter coordinates/scores outside specified bbox region #####
-        if top_left is not None and bot_right is not None:
-            scores, coords = screen_coords(scores, coords, top_left, bot_right)
-            coords = coords - top_left
-            top_left = tuple(top_left)
-            bot_right = tuple(bot_right)
-            w, h = tuple((np.array(bot_right) * scale).astype(int) - (np.array(top_left) * scale).astype(int))
-            region_size = (w, h)
-
-        else:
-            region_size = self.level_dim[vis_level]
-            top_left = (0,0)
-            bot_right = self.level_dim[0]
-            w, h = region_size
-
-        patch_size  = np.ceil(np.array(patch_size) * np.array(scale)).astype(int)
-        coords = np.ceil(coords * np.array(scale)).astype(int)
-        
-        print('\ncreating heatmap for: ')
-        print('top_left: ', top_left, 'bot_right: ', bot_right)
-        print('w: {}, h: {}'.format(w, h))
-        print('scaled patch size: ', patch_size)
-
-        ###### normalize filtered scores ######
-        if convert_to_percentiles:
-            scores = to_percentiles(scores) 
-
-        scores /= 100
-        
-        ######## calculate the heatmap of raw attention scores (before colormap) 
-        # by accumulating scores over overlapped regions ######
-        
-        # heatmap overlay: tracks attention score over each pixel of heatmap
-        # overlay counter: tracks how many times attention score is accumulated over each pixel of heatmap
-        overlay = np.full(np.flip(region_size), 0).astype(float)
-        counter = np.full(np.flip(region_size), 0).astype(np.uint16)      
-        count = 0
-        for idx in range(len(coords)):
-            score = scores[idx]
-            coord = coords[idx]
-            if score >= threshold:
-                if binarize:
-                    score=1.0
-                    count+=1
-            else:
-                score=0.0
-            # accumulate attention
-            overlay[coord[1]:coord[1]+patch_size[1], coord[0]:coord[0]+patch_size[0]] += score
-            # accumulate counter
-            counter[coord[1]:coord[1]+patch_size[1], coord[0]:coord[0]+patch_size[0]] += 1
-
-        if binarize:
-            print('\nbinarized tiles based on cutoff of {}'.format(threshold))
-            print('identified {}/{} patches as positive'.format(count, len(coords)))
-        
-        # fetch attended region and average accumulated attention
-        zero_mask = counter == 0
-
-        if binarize:
-            overlay[~zero_mask] = np.around(overlay[~zero_mask] / counter[~zero_mask])
-        else:
-            overlay[~zero_mask] = overlay[~zero_mask] / counter[~zero_mask]
-        del counter 
-        if blur:
-            overlay = cv2.GaussianBlur(overlay,tuple((patch_size * (1-overlap)).astype(int) * 2 +1),0)  
-
-        if segment:
-            tissue_mask = self.get_seg_mask(region_size, scale, use_holes=use_holes, offset=tuple(top_left))
-            # return Image.fromarray(tissue_mask) # tissue mask
-        
-        if not blank_canvas:
-            # downsample original image and use as canvas
-            img = np.array(self.wsi.read_region(top_left, vis_level, region_size).convert("RGB"))
-        else:
-            # use blank canvas
-            img = np.array(Image.new(size=region_size, mode="RGB", color=(255,255,255))) 
-
-        #return Image.fromarray(img) #raw image
-
-        print('\ncomputing heatmap image')
-        print('total of {} patches'.format(len(coords)))
-        twenty_percent_chunk = max(1, int(len(coords) * 0.2))
-
-        if isinstance(cmap, str):
-            cmap = plt.get_cmap(cmap)
-        
-        for idx in range(len(coords)):
-            if (idx + 1) % twenty_percent_chunk == 0:
-                print('progress: {}/{}'.format(idx, len(coords)))
-            
-            score = scores[idx]
-            coord = coords[idx]
-            if score >= threshold:
-
-                # attention block
-                raw_block = overlay[coord[1]:coord[1]+patch_size[1], coord[0]:coord[0]+patch_size[0]]
-                
-                # image block (either blank canvas or orig image)
-                img_block = img[coord[1]:coord[1]+patch_size[1], coord[0]:coord[0]+patch_size[0]].copy()
-
-                # color block (cmap applied to attention block)
-                color_block = (cmap(raw_block) * 255)[:,:,:3].astype(np.uint8)
-
-                if segment:
-                    # tissue mask block
-                    mask_block = tissue_mask[coord[1]:coord[1]+patch_size[1], coord[0]:coord[0]+patch_size[0]] 
-                    # copy over only tissue masked portion of color block
-                    img_block[mask_block] = color_block[mask_block]
-                else:
-                    # copy over entire color block
-                    img_block = color_block
-
-                # rewrite image block
-                img[coord[1]:coord[1]+patch_size[1], coord[0]:coord[0]+patch_size[0]] = img_block.copy()
-        
-        #return Image.fromarray(img) #overlay
-        print('Done')
-        del overlay
-
-        if blur:
-            img = cv2.GaussianBlur(img,tuple((patch_size * (1-overlap)).astype(int) * 2 +1),0)  
-
-        if alpha < 1.0:
-            img = self.block_blending(img, vis_level, top_left, bot_right, alpha=alpha, blank_canvas=blank_canvas, block_size=1024)
-        
-        img = Image.fromarray(img)
-        w, h = img.size
-
-        if custom_downsample > 1:
-            img = img.resize((int(w/custom_downsample), int(h/custom_downsample)))
-
-        if max_size is not None and (w > max_size or h > max_size):
-            resizeFactor = max_size/w if w > h else max_size/h
-            img = img.resize((int(w*resizeFactor), int(h*resizeFactor)))
-       
-        return img
 
     def block_blending(self, img, vis_level, top_left, bot_right, alpha=0.5, blank_canvas=False, block_size=1024):
         print('\ncomputing blend')
@@ -694,34 +386,3 @@ class WholeSlideImage(object):
         print('detected {}/{} of region as tissue'.format(tissue_mask.sum(), tissue_mask.size))
         return tissue_mask
 
-
-
-
-        """
-        #########################
-        seg_level = 5
-        mthresh = 7
-        sthresh_up = 1
-        img = np.array(self.wsi.read_region((0,0), seg_level, self.level_dim[seg_level]))
-        img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)  # Convert to HSV space
-        img_med = cv2.medianBlur(img_hsv[:,:,1], mthresh)  # Apply median blurring
-        _, img_otsu = cv2.threshold(img_med, 0, sthresh_up, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
-
-        print(
-            "seg_level: {}\nmthresh: {}\nsthresh_up: {}\nself.level_dim: {}\n".format(
-            seg_level, mthresh, sthresh_up, self.level_dim
-            )
-        )
-
-        result = np.where(np.stack([img_otsu]*img.shape[2], axis=2) == 1, img, 0)
-        assem = np.concat([img, result], axis=1)
-
-        Image.fromarray(assem).save('example.png')
-        raise SystemExit
-        #########################
-        """
-        """
-        if close > 0:
-            kernel = np.ones((close, close), np.uint8)
-            img_otsu = cv2.morphologyEx(img_otsu, cv2.MORPH_CLOSE, kernel)                 
-        """

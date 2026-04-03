@@ -27,30 +27,6 @@ class QualityMeter:
         condition_1 = gray > max_gray * 0.96
 
         mask = condition_0 & condition_1
-
-        """
-        diff = np.abs(condition_0.sum() - condition_1.sum())
-        if diff > self.maxdiff:
-            print(self.maxdiff, diff)
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(2, 2)
-            ax[0, 0].imshow(patch)
-            ax[0, 0].set_xticks([])
-            ax[0, 0].set_yticks([])
-            ax[0, 1].imshow(mask, cmap='grey')
-            ax[0, 1].set_xticks([])
-            ax[0, 1].set_yticks([])
-            ax[1, 0].imshow(condition_0, cmap='grey')
-            ax[1, 0].set_xticks([])
-            ax[1, 0].set_yticks([])
-            ax[1, 1].imshow(condition_1, cmap='grey')
-            ax[1, 1].set_xticks([])
-            ax[1, 1].set_yticks([])
-            plt.tight_layout()
-            plt.show()
-            self.maxdiff = diff
-        """
-
         return mask.mean(), mask
 
 
@@ -102,20 +78,13 @@ class QMAssigner:
                 'pos_y':pos[1],
                 'blur':blur,
                 'bg':bg,
-                'pix_sum':np.sum(patch, axis=(0, 1)),
-                'pix_sq_sum':np.sum(patch**2, axis=(0, 1)),
-                'n_pixls':patch.shape[0] * patch.shape[1],
             })
 
         df = pd.DataFrame(rows)
         df['slide_id'] = slide_id
         df['patch_lvl'] = patch_level
         df['patch_size'] = patch_size
-        df = df[[
-            'slide_id', 'pos_x', 'pos_y', 'blur', 'bg',
-            'patch_lvl', 'patch_size', 'pix_sum',
-            'pix_sq_sum', 'n_pixls',
-        ]]
+        df = df[['slide_id', 'pos_x', 'pos_y', 'blur', 'bg', 'patch_lvl', 'patch_size']]
         df.to_csv(fpath_qualityLog, index=False)
     
 class QMAWrapper:

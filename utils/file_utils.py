@@ -1,18 +1,6 @@
-#import pickle
+
 import h5py
 
-"""
-def save_pkl(filename, save_object):
-	writer = open(filename,'wb')
-	pickle.dump(save_object, writer)
-	writer.close()
-
-def load_pkl(filename):
-	loader = open(filename,'rb')
-	file = pickle.load(loader)
-	loader.close()
-	return file
-"""
 def save_hdf5(output_path, asset_dict, attr_dict= None, mode='a', chunk_size=32):
     with h5py.File(output_path, mode) as file:
         for key, val in asset_dict.items():

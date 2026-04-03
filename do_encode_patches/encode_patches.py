@@ -49,12 +49,6 @@ class WSI2BagsReader(Dataset):
         row = self.map.iloc[idx]
         coord = np.array((row['pos_x'], row['pos_y']), dtype=np.int32)
         patch = self.wsi.read_region(coord, self.patch_lvl, (self.patch_size, self.patch_size)).convert('RGB')
-
-        #import matplotlib.pyplot as plt
-        #plt.imshow(patch)
-        #plt.tight_layout()
-        #plt.show()
-
         patch = self.transforms(patch)
         return {'patch': patch, 'coord': coord}
     

@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import openslide
 import h5py
 from PIL import Image
-#from tqdm import tqdm
 
 """
 questions to answer:
@@ -17,10 +16,11 @@ questions to answer:
 
 class QualityVisualizer:
     def __init__(self, dpath_wsiRoot, dpath_wsiCoords, dpath_qualityLog,
-        fltr_params, dpath_geometryCheck, dpath_keepVreject,
+        fltr_params, dataset_coverage, dpath_geometryCheck, dpath_keepVreject,
         fpath_patchProperties, fpath_perSlideInfo, 
     ):
-        #fpaths_qlog = dpath_qualityLog.iterdir()
+        fpaths_qlog = list(dpath_qualityLog.iterdir())
+        fpaths_qlog = fpaths_qlog[:int(len(fpaths_qlog) * dataset_coverage)]
         self.check_extraction_geometry(
             dpath_wsiRoot=dpath_wsiRoot,
             dpath_wsiCoords=dpath_wsiCoords,
