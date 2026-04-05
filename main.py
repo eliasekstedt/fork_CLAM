@@ -8,7 +8,7 @@ if __name__ == '__main__':
         and metadata for patches useful in subsequent patch
         extraction.
         """
-        print('\nstarting coord search\n')
+        print('\n### starting coord search ###\n')
         from do_coord_search.coord_finder import CoordFinder
         CoordFinder(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
@@ -19,7 +19,6 @@ if __name__ == '__main__':
             fpath_segmParam=cfg.fpath_segmParam,
             fpath_segmlog=cfg.fpath_segmlog,
         )
-        print('coord search complete\n')
 
     if cfg.do_quality_check:
         """
@@ -27,7 +26,7 @@ if __name__ == '__main__':
         Generate a .csv file where quality measurements for each
         patch are stored. Useful for downstream filtering adjustments.
         """
-        print('\nstarting patch quality metrics assignment\n')
+        print('\n### starting patch quality metrics assignment ###\n')
         from do_quality_check.patch_quality_metrics import QMAWrapper
         QMAWrapper(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
@@ -35,14 +34,13 @@ if __name__ == '__main__':
             dpath_wsiCoords=cfg.dpath_wsiCoords,
             fpath_segmlog=cfg.fpath_segmlog,
         )
-        print('\npatch quality metric assignment complete\n')
 
         """
         Produces files for verification of proper patch extraction,
         e.g no patch overlap or missing space and samples to show
         rejected vs accepted patches given set filtering parameters.
         """
-        print('\ngenerating visualizations\n')
+        print('\n### generating visualizations ###\n')
         from do_quality_check.patch_quality_check import QualityVisualizer
         QualityVisualizer(
             dpath_wsiRoot=cfg.dpath_wsiRoot,
@@ -55,7 +53,6 @@ if __name__ == '__main__':
             fpath_patchProperties=cfg.fpath_patchProperties,
             fpath_perSlideInfo=cfg.fpath_perSlideInfo,
         )
-        print('\ngeneration complete\n')
 
     if cfg.do_encode_patches:
         """
@@ -64,7 +61,7 @@ if __name__ == '__main__':
         and collects those feature vectors in a bag to represent
         the whole slide.
         """
-        print('\nstarting feature extraction\n')
+        print('\n### starting feature extraction ###\n')
         from do_encode_patches.encode_patches import FeatureX
         FeatureX(
             dpath_qualityLog=cfg.dpath_qualityLog,
@@ -81,7 +78,6 @@ if __name__ == '__main__':
             target_bag_size=cfg.target_bag_size,
             dpath_sampleFltrpassed=cfg.dpath_sampleFltrpassed,
         )
-        print('\nfeature extraction complete\n')
 
     if len(list(cfg.dpath_milfolds.iterdir())) == 0:
         """
@@ -89,7 +85,7 @@ if __name__ == '__main__':
         is done in a way that balances patient properties like age
         and psa.
         """
-        print('\ngenerating folds\n')
+        print('\n### generating folds ###\n')
         from do_MIL.foldsplitter import FeatureMapSplitter
         FeatureMapSplitter(
             fpath_encodingMap=cfg.fpath_encodingMap,
@@ -102,7 +98,7 @@ if __name__ == '__main__':
         that represent the slides. trains one model for every
         defined fold except the holdout.
         """
-        print('\ntraining CLAM model\n')
+        print('\n### training CLAM model ###\n')
         from do_MIL.trainer import MilTrainWrapper
         wrapper = MilTrainWrapper(
             dpath_ptFeature=cfg.dpath_ptFeature,
@@ -123,7 +119,7 @@ if __name__ == '__main__':
             record = Path(file.readlines()[-1])
         tag = record.parts[record.parts.index('run') + 1]
 
-        print('\ncross-validation\n')
+        print('\n### cross-validation ###\n')
         from do_evaluate.evaluator import Evaluator
         Evaluator(
             dpath_milfolds=cfg.dpath_milfolds,

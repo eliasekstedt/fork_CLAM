@@ -7,11 +7,11 @@ def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
 
-### only path need specifying ###
+### only paths you need specifying ###
+wsi_origin = 'replace with your .mrxs src data dir'
+cfg.fpath_Xmodel = 'replace with path to encoder'
 
-wsi_origin = '../CLAM/data0_mrxs/'
-
-######### define steps ###########
+########### toggle steps #############
 cfg.do_coord_search = True
 cfg.do_quality_check = True
 cfg.do_encode_patches = True
@@ -19,6 +19,10 @@ cfg.do_mil = True
 cfg.do_evaluate = True
 ##################################
 
+
+"""
+Dir paths
+"""
 cfg.dpath_wsiRoot = Path(wsi_origin)
 cfg.dpath_csvRoot = Path('csv/')
 cfg.dpath_qualityLog = cfg.dpath_csvRoot / 'quality_log'
@@ -61,6 +65,10 @@ create_dirs(
     cfg.dpath_sampleFltrpassed,
 )
 
+
+"""
+File paths
+"""
 cfg.fpath_patientInfo = cfg.dpath_csvRoot / 'patient_info.csv'
 cfg.fpath_segmParam = cfg.dpath_csvRoot / 'segmParams.csv'
 cfg.fpath_segmlog = cfg.dpath_csvRoot / 'segmlog.csv'
@@ -74,9 +82,11 @@ cfg.fltr_params = {
 }
 cfg.dataset_coverage = 0.05
 
-# feauture extraction
-cfg.fpath_Xmodel = cfg.dpath_dataRoot / 'Xmodel.ckpt'
-cfg.X_batch_size = 512 # best kept small for appropriate randomization, aka even bag size per slide
+
+"""
+Feauture extraction
+"""
+cfg.X_batch_size = 512
 cfg.X_patch_size = 224
 cfg.target_bag_size = 2500
 
@@ -86,6 +96,10 @@ cfg.Xaugm = {
     'znorm_std':[0.229, 0.224, 0.225],
 }
 
+
+"""
+CLAM training
+"""
 from datetime import datetime
 current = datetime.now()
 
