@@ -123,10 +123,11 @@ The results suggest that performance in this setting is highly sensitive to:
 ---
 
 ## Key Takeaways
-- Weakly supervised MIL on WSIs is **highly sensitive to signal quality**  
-- Small differences in preprocessing can significantly impact outcomes  
+- The positive signal in this task appears to be inherently weak and difficult to capture  
+- Learning from morphologically benign tissue represents a challenging problem with low signal-to-noise ratio  
+- Model performance is strongly influenced by the underlying data rather than pipeline structure alone  
+- Structured pipelines and diagnostics are essential for investigating model behavior under weak-signal conditions  
 - Reproducing published results in low-signal medical imaging tasks is non-trivial  
-- Structured pipelines and diagnostics are essential for understanding model behavior  
 
 ---
 
