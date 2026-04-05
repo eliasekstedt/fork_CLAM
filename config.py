@@ -89,8 +89,7 @@ cfg.Xaugm = {
 from datetime import datetime
 current = datetime.now()
 
-n_epochs = 3
-tag_name = 'unspecified_run'
+tag_name = 'unspecified'
 cfg.tag = f'{tag_name}' + '_{}_{}_{}_{}'.format(
     str(current)[8:10], str(current)[11:13],
     str(current)[14:16], str(current)[17:19],
@@ -101,7 +100,7 @@ cfg.hparam = {
     'batch_size':1,
     'learning_rate':1e-3,
     'weight_decay':5e-5,
-    'nr_epochs':30,
+    'nr_epochs':100,
 }
 
 cfg.state_dict = ''

@@ -24,11 +24,11 @@ class QualityVisualizer:
         self.check_extraction_geometry(
             dpath_wsiRoot=dpath_wsiRoot,
             dpath_wsiCoords=dpath_wsiCoords,
-            fpaths_qlog=list(dpath_qualityLog.iterdir()),
+            fpaths_qlog=fpaths_qlog,
             dpath_geometryCheck=dpath_geometryCheck,
         )
         self.get_per_slide_info(
-            fpaths_qlog=list(dpath_qualityLog.iterdir()),
+            fpaths_qlog=fpaths_qlog,
             fltr_bg=fltr_params['bg'],
             fltr_blur=fltr_params['blur'],
             fpath_patchProperties=fpath_patchProperties,
@@ -38,7 +38,7 @@ class QualityVisualizer:
         self.vis_keep_v_reject(
             dpath_wsiRoot=dpath_wsiRoot,
             dpath_wsiCoords=dpath_wsiCoords,
-            fpaths_qlog=list(dpath_qualityLog.iterdir()),
+            fpaths_qlog=fpaths_qlog,
             fltr_bg=fltr_params['bg'],
             fltr_blur=fltr_params['blur'],
             dpath_keepVreject=dpath_keepVreject,
