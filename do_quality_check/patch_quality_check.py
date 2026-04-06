@@ -131,7 +131,7 @@ class QualityVisualizer:
                             if assem is None:
                                 assem = assem_row
                             else:
-                                assem = np.concat([assem, assem_row], axis=0)
+                                assem = np.concatenate([assem, assem_row], axis=0)
                             assem_row = None
             return assem
             

@@ -79,7 +79,7 @@ if __name__ == '__main__':
             dpath_sampleFltrpassed=cfg.dpath_sampleFltrpassed,
         )
 
-    if len(list(cfg.dpath_milfolds.iterdir())) == 0:
+    if cfg.do_mil and len(list(cfg.dpath_milfolds.iterdir())) == 0:
         """
         Splits the slides into training and validation data. this
         is done in a way that balances patient properties like age

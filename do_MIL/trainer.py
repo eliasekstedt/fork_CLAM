@@ -63,7 +63,6 @@ class MILTrainer:
 
     def val_epoch(self, valloader, device):
         cost, performance, tp, pp = [0] * 4
-
         self.model.eval()
         with torch.inference_mode():
             for features, label in valloader:
@@ -171,9 +170,9 @@ class MilTrainWrapper:
 
             train_actual_pos, val_actual_pos = counts_0[1].item(), counts_1[1].item()
             logmore = {
-                'nr_pos_trn/val':loader_0.dataset.map['label'].value_counts().tolist(),
+                'trn_nr_pos/neg':loader_0.dataset.map['label'].value_counts().tolist(), # number of positive examples and number of negative examples in train set (loader_0)
                 'lf_weights':lf_weights.numpy(),
-                'actl.pos_trn/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}",
+                'actual_nr_pos_trn/val':f"{int(train_actual_pos)}/{int(val_actual_pos)}", # number of positive examples in train and validation, (loader_0 and loader_1) respectively
             }
             
             dpath_run = self.init_run(hparam, logmore, tag, device, k)

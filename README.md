@@ -62,9 +62,6 @@ Geometry check showing an assembly of 9 neighboring patches from a WSI. The purp
 Sample patches divided into those kept (left) versus rejected (right) for a single WSI given the filtering parameters. This provides a visual indication of how patches are filtered before feature extraction.  
 ![Keep vs reject](quality_samples/keepVreject_035_KL.png)
 
-Additional sample of patches approved by the filter for a given WSI.  
-![Approved patches](quality_samples/filter_approved_021_ABC.png)
-
 ---
 
 ### 3. Patch Encoding
@@ -73,6 +70,9 @@ Additional sample of patches approved by the filter for a given WSI.
 - Aggregates feature vectors into **bags (one per slide)**  
 
 Feature extraction is performed using a pretrained encoder trained on histopathology data.
+
+Sample of patches approved by the filter for a given WSI ahead of encoding.  
+![Approved patches](quality_samples/filter_approved_021_ABC.png)
 
 ---
 
@@ -109,6 +109,7 @@ Despite closely following the overall methodology, I have not yet been able to a
 ### Attempts to Improve Performance
 - Applied patch-level filtering to improve signal-to-noise ratio  
 - Balanced datasets using patient attributes (e.g. age, PSA)  
+- Computed weights to compensate for class imbalance during training of CLAM-model
 - Used cross-validation  
 - Conducted controlled experiments to test model sensitivity to signal  
 

@@ -7,11 +7,11 @@ def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
 
-### only paths you need specifying ###
-wsi_origin = 'replace with your .mrxs src data dir'
-cfg.fpath_Xmodel = 'replace with path to encoder'
+### only paths need specifying ###
+wsi_origin = 'path to .mrxs dir'
+cfg.fpath_Xmodel = 'path to encoder'
 
-########### toggle steps #############
+########## toggle steps ###########
 cfg.do_coord_search = True
 cfg.do_quality_check = True
 cfg.do_encode_patches = True
