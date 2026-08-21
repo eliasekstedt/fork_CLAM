@@ -7,9 +7,9 @@ def create_dirs(*dirpaths):
     for dirpath in dirpaths:
         dirpath.mkdir(exist_ok=True)
 
-### only paths need specifying ###
-wsi_origin = 'path to .mrxs dir'
-cfg.fpath_Xmodel = 'path to encoder'
+### the only paths that need specifying ###
+wsi_origin = '../CLAM/data0_mrxs'
+cfg.fpath_Xmodel = '../CLAM/Xmodel.ckpt'
 
 ########## toggle steps ###########
 cfg.do_coord_search = True
