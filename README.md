@@ -3,7 +3,7 @@
 ## Overview
 This project is an **independent replication and analysis** of a weakly supervised learning pipeline for whole-slide images (WSIs), based on the CLAM framework (https://arxiv.org/abs/2004.09666).
 
-CLAM is an attention-based multiple instance learning (MIL) method that enables slide-level classification using only slide-level labels. A later study (https://www.nature.com/articles/s41598-025-15105-6#article-info) applied this approach to prostate biopsy data to predict cancer from morphologically benign tissue.
+CLAM is an attention-based multiple instance learning (MIL) method that enables slide-level classification using only slide-level labels. A later study (https://www.nature.com/articles/s41598-025-15105-6) applied this approach to prostate biopsy data to predict cancer from morphologically benign tissue.
 
 The goals of this project are to:
 - Reproduce the applied study using the CLAM pipeline  
